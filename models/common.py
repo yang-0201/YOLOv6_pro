@@ -31,8 +31,6 @@ from utils.torch_utils import copy_attr, time_sync
 from models.module import *
 from models.swin_transformer import SwinTR,swin_permute
 from models.swin_transformer2 import SwinTRV2
-# from models.dyhead import DyHead
-# from mmdet.models.backbones.cbnet import CBSwinTransformer,CBRes2Net
 from models.yolov6 import BepC3
 def autopad(k, p=None):  # kernel, padding
     # Pad to 'same'
