@@ -12,8 +12,9 @@ YOLOV6s
 images/train 中放入你的训练集图片
 images/val 中放入你的验证集图片
 labels/train 中放入你的训练集标签
-labels/val 中放入你的验证集标签 ```
-
+labels/val 中放入你的验证集标签 
+```
+文件结构如下
 ```
 ├── data
 │   ├── images
@@ -25,4 +26,7 @@ labels/val 中放入你的验证集标签 ```
 ```
 
 <summary> 训练命令 </summary>
-``` python tools/train.py --batch 8 --conf configs/model_yaml/yolov6t_yaml.py --data data/car.yaml --device 0 --img 640 --epochs 100 ```
+
+```shell
+python tools/train.py --batch 8 --conf configs/model_yaml/yolov6t_yaml.py --data data/car.yaml --device 0 --img 640 --epochs 100
+```
