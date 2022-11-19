@@ -13,12 +13,10 @@ from utils.general import LOGGER
 from utils.torch_utils import model_info
 def parse_model(d, ch = 3):  # model_dict, input_channels(3)
     LOGGER.info(f"\n{'':>3}{'from':>18}{'n':>3}{'params':>10}  {'module':<40}{'arguments':<30}")
-    anchors, nc, gd, gw = d['anchors'], d['nc'], d['depth_multiple'], d['width_multiple']
-    na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
-    no = na * (nc + 5)  # number of outputs = anchors * (classes + 5)
+    gd, gw = d['depth_multiple'], d['width_multiple']
 
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
-    for i, (f, n, m, args) in enumerate(d['backbone']):  # from, number, module, args
+    for i, (f, n, m, args) in enumerate(d['backbone']+d['neck']):  # from, number, module, args
         m = eval(m) if isinstance(m, str) else m  # eval strings
         for j, a in enumerate(args):
             try:
@@ -29,8 +27,7 @@ def parse_model(d, ch = 3):  # model_dict, input_channels(3)
         n = n_  = max(round(n * gd), 1) if n > 1 else n  # depth gain
         if m in [Conv_C3,Bottleneck, SPPF,C3,RepBlock,SimConv,RepVGGBlock,Transpose,SimSPPF]:
             c1, c2 = ch[f], args[0]
-            if c2 != no:  # if not output
-                c2 = make_divisible(c2 * gw, 8)
+            c2 = make_divisible(c2 * gw, 8)
 
             args = [c1, c2, *args[1:]]
             if m in [C3,RepBlock]:
