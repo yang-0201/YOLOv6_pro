@@ -13,12 +13,10 @@ from utils.general import LOGGER
 from utils.torch_utils import model_info
 def parse_model(d, ch = 3):  # model_dict, input_channels(3)
     LOGGER.info(f"\n{'':>3}{'from':>18}{'n':>3}{'params':>10}  {'module':<40}{'arguments':<30}")
-    anchors, nc, gd, gw = d['anchors'], d['nc'], d['depth_multiple'], d['width_multiple']
-    na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
-    no = na * (nc + 5)  # number of outputs = anchors * (classes + 5)
+    gd, gw = d['depth_multiple'], d['width_multiple']
 
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
-    for i, (f, n, m, args) in enumerate(d['backbone']):  # from, number, module, args
+    for i, (f, n, m, args) in enumerate(d['backbone']+d['neck']):  # from, number, module, args
         m = eval(m) if isinstance(m, str) else m  # eval strings
         for j, a in enumerate(args):
             try:
@@ -26,14 +24,13 @@ def parse_model(d, ch = 3):  # model_dict, input_channels(3)
             except NameError:
                 pass
 
-        n_  = max(round(n * gd), 1) if n > 1 else n  # depth gain
-        if m in [Conv_C3,Bottleneck, SPPF,C3]:
+        n = n_  = max(round(n * gd), 1) if n > 1 else n  # depth gain
+        if m in [Conv_C3,Bottleneck, SPPF,C3,RepBlock,SimConv,RepVGGBlock,Transpose,SimSPPF,BepC3]:
             c1, c2 = ch[f], args[0]
-            if c2 != no:  # if not output
-                c2 = make_divisible(c2 * gw, 8)
+            c2 = make_divisible(c2 * gw, 8)
 
             args = [c1, c2, *args[1:]]
-            if m is C3:
+            if m in [C3,RepBlock]:
                 args.insert(2, n)  # number of repeats
                 n = 1
         elif m is nn.BatchNorm2d:
@@ -42,7 +39,7 @@ def parse_model(d, ch = 3):  # model_dict, input_channels(3)
             c2 = sum(ch[x] for x in f)
         elif m is Out:
             pass
-        elif m in [RepVGGBlock,Stem,BepC3,ConvWrapper,SimConv,Transpose]:
+        elif m in [Stem,ConvWrapper,Transpose]:
             c1 = ch[f]
             c2 = args[0]
             args = [c1, c2, *args[1:]]
@@ -105,12 +102,18 @@ class Model(nn.Module):
         export_mode = torch.onnx.is_in_onnx_export()
         if self.build_type == "yaml":
         ##############
+            number_layer = 0
             y, dt = [], []  # outputs
             for m in self.backbone:
+
                 if m.f != -1:  # if not from previous layer
                     x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
+                try:
+                    number_layer = number_layer+1
+                    x = m(x)  # run
+                except:
+                    print("run error ,error layer: "+str(number_layer-1))
 
-                x = m(x)  # run
                 y.append(x if m.i in self.save else None)  # save output
         ############
         else:
@@ -188,12 +191,13 @@ def build_network(config, channels, num_classes, anchors, num_layers):
     return backbone, neck, head
 
 def build_network_yaml(config, channels, num_classes, anchors, num_layers):
-
+    depth_mul = config.model.depth_multiple
+    width_mul = config.model.width_multiple
     num_anchors = config.model.head.anchors
     use_dfl = config.model.head.use_dfl
     reg_max = config.model.head.reg_max
     channels_list = config.model.head.effidehead_channels
-
+    channels_list = [make_divisible(i * width_mul, 8) for i in (channels_list)]
 
     head_layers = build_effidehead_layer(channels_list, num_anchors, num_classes, reg_max)
     head = Detect(num_classes, anchors, num_layers, head_layers=head_layers, use_dfl=use_dfl)
