@@ -26,12 +26,16 @@ data/labels/val 中放入你的验证集标签
 │   │   ├── val
 ```
 
-<summary> data.yaml配置 </summary>
+<summary> data.yaml 配置 </summary>
 
 ```shell
 train: data/images/train # train images
 val: data/images/val # val images
 ```
+
+<summary> 预训练权重放在 weights 目录 </summary>
+
+
 
 <summary> 训练命令 </summary>
 
