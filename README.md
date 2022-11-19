@@ -36,9 +36,22 @@ nc: 3  # number of classes
 names: ["car","person","bike"] #classes names
 ```
 
-<summary> 预训练权重放在 weights 目录 </summary>
-
-
+<summary> 预训练权重 </summary>
+<p>
+  YOLOv6m_yaml.pt 链接：https://pan.baidu.com/s/1DKEi84e6XfehUjA8--dLrQ?pwd=uuhn  提取码：uuhn 
+</p>
+<p>
+  YOLOv6s_yaml.pt 链接：https://pan.baidu.com/s/1p-y6QhCslwKT9hCO0o8qEg?pwd=eott  提取码：eott 
+</p>
+<p>
+  YOLOv6t_yaml.pt 链接：https://pan.baidu.com/s/1iWIXJvc2C6ZadekFNK0uFQ?pwd=hc1c  提取码：hc1c 
+</p>
+<p>
+  YOLOv6l_yaml.pt 链接：https://pan.baidu.com/s/17QXSAWbGZZ7hNCJcEq2-Rw?pwd=f2nf  提取码：f2nf 
+</p>
+<p>
+  预训练权重放在 weights 目录
+</p>
 
 <summary> 训练命令 </summary>
 
