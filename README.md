@@ -14,7 +14,8 @@ images/val 中放入你的验证集图片
 labels/train 中放入你的训练集标签
 labels/val 中放入你的验证集标签 
 ```
-文件结构如下
+<summary> 数据集文件结构 </summary>
+
 ```
 ├── data
 │   ├── images
@@ -23,6 +24,13 @@ labels/val 中放入你的验证集标签
 │   ├── labels
 │   │   ├── train
 │   │   ├── val
+```
+
+<summary> data.yaml配置 </summary>
+
+```shell
+train: data/images/train # train images
+val: data/images/val # val images
 ```
 
 <summary> 训练命令 </summary>
