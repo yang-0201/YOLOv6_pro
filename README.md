@@ -31,6 +31,9 @@ data/labels/val 中放入你的验证集标签
 ```shell
 train: data/images/train # train images
 val: data/images/val # val images
+is_coco: False
+nc: 3  # number of classes
+names: ["car","person","bike"] #classes names
 ```
 
 <summary> 预训练权重放在 weights 目录 </summary>
