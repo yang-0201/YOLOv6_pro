@@ -36,17 +36,17 @@ names: ["car","person","bike"] #classes names
 ## 训练命令
 YOLOv6t
 ```shell
-python tools/train.py --conf configs/model_yaml/yolov6t_yaml.py --data data/car.yaml --device 0 --img 640
+python tools/train.py --conf-configs/model_yaml/yolov6t_yaml.py --data data/car.yaml --device 0 --img 640
 ```
 YOLOv6s
 ```shell
-python tools/train.py --conf configs/model_yaml/yolov6s_yaml.py --data data/car.yaml --device 0 --img 640
+python tools/train.py --conf-configs/model_yaml/yolov6s_yaml.py --data data/car.yaml --device 0 --img 640
 ```
 YOLOv6m
 ```shell
-python tools/train.py --conf configs/model_yaml/yolov6m_yaml.py --data data/car.yaml --device 0 --img 640
+python tools/train.py --conf-configs/model_yaml/yolov6m_yaml.py --data data/car.yaml --device 0 --img 640
 ```
 YOLOv6l
 ```shell
-python tools/train.py --conf configs/model_yaml/yolov6l_yaml.py --data data/car.yaml --device 0 --img 640
+python tools/train.py --conf-configs/model_yaml/yolov6l_yaml.py --data data/car.yaml --device 0 --img 640
 ```
