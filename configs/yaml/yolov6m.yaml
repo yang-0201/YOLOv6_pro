@@ -1,0 +1,36 @@
+depth_multiple: 0.60  # model depth multiple
+width_multiple: 0.75  # layer channel multiple
+backbone:
+  # [from, number, module, args]
+  [[-1, 1, RepVGGBlock, [64, 3, 2]],  # 0-P1/2
+   [-1, 1, RepVGGBlock, [128, 3, 2]],  # 1-P2/4
+   [-1, 1, BepC3, [128, 4, "RepVGGBlock", 2/3]],
+   [-1, 1, RepVGGBlock, [256, 3, 2]],  # 3-P3/8
+   [-1, 1, BepC3, [256, 7, "RepVGGBlock", 2/3]],
+   [-1, 1, RepVGGBlock, [512, 3, 2]],  # 5-P4/16
+   [-1, 1, BepC3, [512, 11, "RepVGGBlock", 2/3]],
+   [-1, 1, RepVGGBlock, [1024, 3, 2]],  # 7-P5/32
+   [-1, 1, BepC3, [1024, 4, "RepVGGBlock", 2/3]],
+   [-1, 1, SPPF, [1024, 5]]]  # 9
+neck:
+   [[-1, 1, SimConv, [256, 1, 1]],
+   [-1, 1, Transpose, [256]],
+   [[-1, 6], 1, Concat, [1]],  #768
+   [-1, 1, BepC3, [256, 7, "RepVGGBlock", 2/3]],
+
+   [-1, 1, SimConv, [128, 1, 1]],
+   [-1, 1, Transpose, [128]],
+   [[-1, 4], 1, Concat, [1]],  #384
+   [-1, 1, BepC3, [128, 7, "RepVGGBlock", 2/3]],   #out
+
+   [-1, 1, SimConv, [128, 3, 2]],
+   [[-1, 14], 1, Concat, [1]],  # cat head P4
+   [-1, 1, BepC3, [256, 7, "RepVGGBlock", 2/3]],  # 20 (P4/16-medium)
+
+   [-1, 1, SimConv, [256, 3, 2]],
+   [[-1, 10], 1, Concat, [1]],  # cat head P5
+   [-1, 1, BepC3, [512, 7, "RepVGGBlock", 2/3]],  # 23 (P5/32-large)
+
+   [[17,20,23],1,Out,[]]]
+
+
