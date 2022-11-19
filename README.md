@@ -11,7 +11,7 @@ YOLOV6s
 ```
 images/train 中放入你的训练集图片
 images/val 中放入你的验证集图片
-labels/train 中放入你的训练集标签
+labels/train 中放入你的训练集标签(标签格式为yolo格式)
 labels/val 中放入你的验证集标签 
 ```
 <summary> 数据集文件结构 </summary>
