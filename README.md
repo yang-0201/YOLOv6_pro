@@ -38,3 +38,15 @@ val: data/images/val # val images
 ```shell
 python tools/train.py --batch 8 --conf configs/model_yaml/yolov6t_yaml.py --data data/car.yaml --device 0 --img 640 --epochs 100
 ```
+
+```shell
+python tools/train.py --batch 8 --conf configs/model_yaml/yolov6s_yaml.py --data data/car.yaml --device 0 --img 640 --epochs 100
+```
+
+```shell
+python tools/train.py --batch 8 --conf configs/model_yaml/yolov6m_yaml.py --data data/car.yaml --device 0 --img 640 --epochs 100
+```
+
+```shell
+python tools/train.py --batch 8 --conf configs/model_yaml/yolov6l_yaml.py --data data/car.yaml --device 0 --img 640 --epochs 100
+```
