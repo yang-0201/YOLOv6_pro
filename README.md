@@ -1,7 +1,7 @@
 # YOLOv6_pro
 Make it easier for yolov6 to change the network structure.<br>
 Build a YOLOv6 network using the YOLOv5 style of building networks, modifying your modules in the yaml file as you wish.<br>
-Already supported models: YOLOV6l, YOLOV6m, YOLOV6t, YOLOV6s
+Already supported models: `YOLOV6l`, `YOLOV6m`, `YOLOV6t`, `YOLOV6s`
 
 ## 数据集配置
 ```
