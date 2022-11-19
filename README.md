@@ -40,7 +40,7 @@ val: data/images/val # val images
 <summary> 训练命令 </summary>
 
 ```shell
-python tools/train.py --batch 8 --conf configs/model_yaml/yolov6t_yaml.py --data data/car.yaml --device 0 --img 640 --epochs 100
+python tools/train.py --conf configs/model_yaml/yolov6t_yaml.py --data data/car.yaml --device 0 --img 640
 ```
 
 ```shell
