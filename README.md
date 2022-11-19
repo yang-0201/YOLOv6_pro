@@ -41,8 +41,11 @@ names: ["car","person","bike"] #classes names
 ```
 
 <summary> 预训练权重 </summary>
+[文本](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml.pt)
 <p>
-  YOLOv6m_yaml.pt 链接：https://pan.baidu.com/s/1DKEi84e6XfehUjA8--dLrQ?pwd=uuhn  提取码：uuhn 
+  YOLOv6m_yaml.pt 
+ [melt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml.pt)
+ 链接：https://pan.baidu.com/s/1DKEi84e6XfehUjA8--dLrQ?pwd=uuhn  提取码：uuhn 
 </p>
 <p>
   YOLOv6s_yaml.pt 链接：https://pan.baidu.com/s/1p-y6QhCslwKT9hCO0o8qEg?pwd=eott  提取码：eott 
