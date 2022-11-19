@@ -1,33 +1,27 @@
-# YOLOv6t model
+# YOLOv6m model
 model = dict(
-    type='YOLOv6t',
-    pretrained='weights/yolov6t_yaml.pt',
+    type='YOLOv6m',
+    pretrained='weights/yolov6m_yaml.pt',
     build_type='yaml',
-    yaml_file='configs/yaml/yolov6t.yaml',
-    depth_multiple=0.33,
-    width_multiple=0.375,
-    backbone=dict(
-        type='EfficientRep',
-        num_repeats=[1, 6, 12, 18, 6],
-        out_channels=[64, 128, 256, 512, 1024],
-        ),
-    neck=dict(
-        type='RepPANNeck',
-        num_repeats=[12, 12, 12, 12],
-        out_channels=[256, 128, 128, 256, 256, 512],
-        ),
+    yaml_file='configs/yaml/yolov6m.yaml',
+    depth_multiple=0.60,
+    width_multiple=0.75,
     head=dict(
         type='EffiDeHead',
-        effidehead_channels=[64, 128, 256, 512, 1024, 256, 48, 128, 96, 256, 192],
+        effidehead_channels=[64, 128, 256, 512, 1024, 256, 128, 128, 256, 256, 512],
         in_channels=[128, 256, 512],
         num_layers=3,
         begin_indices=24,
         anchors=1,
         out_indices=[17, 20, 23],
         strides=[8, 16, 32],
-        iou_type='siou',
-        use_dfl=False,
-        reg_max=0 #if use_dfl is False, please set reg_max to 0
+        iou_type='giou',
+        use_dfl=True,
+        reg_max=16, #if use_dfl is False, please set reg_max to 0
+        distill_weight={
+            'class': 1.0,
+            'dfl': 1.0,
+        },
     )
 )
 

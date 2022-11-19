@@ -1,32 +1,28 @@
-# YOLOv6l model
+# YOLOv6t model
 model = dict(
-    type='YOLOv6l_yaml',
-    pretrained='yolov6l_yaml.pt',
-    build_type = 'yaml',
-    yaml_file = 'configs/yaml/yolov6l.yaml',
-    depth_multiple=1.0,
-    width_multiple=1.0,
+    type='YOLOv6t',
+    pretrained='weights/yolov6t_yaml.pt',
+    build_type='yaml',
+    yaml_file='configs/yaml/yolov6t.yaml',
+    depth_multiple=0.33,
+    width_multiple=0.375,
     head=dict(
         type='EffiDeHead',
-        effidehead_channels =[64, 128, 256, 512, 1024,256, 128, 128, 256, 256, 512],
+        effidehead_channels=[64, 128, 256, 512, 1024, 256, 128, 128, 256, 256, 512],
         in_channels=[128, 256, 512],
         num_layers=3,
         begin_indices=24,
         anchors=1,
         out_indices=[17, 20, 23],
         strides=[8, 16, 32],
-        iou_type='giou',
-        use_dfl=True,
-        reg_max=16, #if use_dfl is False, please set reg_max to 0
-        distill_weight={
-            'class': 2.0,
-            'dfl': 1.0,
-        },
+        iou_type='siou',
+        use_dfl=False,
+        reg_max=0 #if use_dfl is False, please set reg_max to 0
     )
 )
 
 solver = dict(
-    optim='Adam',
+    optim='SGD',
     lr_scheduler='Cosine',
     lr0=0.0032,
     lrf=0.12,
@@ -50,5 +46,3 @@ data_aug = dict(
     mosaic=1.0,
     mixup=0.243,
 )
-training_mode = "conv_silu"
-# use normal conv to speed up training and further improve accuracy.

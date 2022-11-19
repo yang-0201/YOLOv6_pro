@@ -1,14 +1,14 @@
 # YOLOv6l model
 model = dict(
-    type='YOLOv6l',
-    pretrained='algae/car70/weights/best_ckpt.pt',
+    type='YOLOv6l_yaml',
+    pretrained='yolov6l_yaml.pt',
     build_type = 'yaml',
-    yaml_file = 'configs/yaml/yolov5l.yaml',
+    yaml_file = 'configs/yaml/yolov6l.yaml',
     depth_multiple=1.0,
     width_multiple=1.0,
     head=dict(
         type='EffiDeHead',
-        effidehead_channels =[64, 128, 256, 512, 1024,256, 128, 128, 256, 256, 512],
+        effidehead_channels =[64, 128, 256, 512, 1024, 256, 128, 128, 256, 256, 512],
         in_channels=[128, 256, 512],
         num_layers=3,
         begin_indices=24,

@@ -25,7 +25,7 @@ def parse_model(d, ch = 3):  # model_dict, input_channels(3)
                 pass
 
         n = n_  = max(round(n * gd), 1) if n > 1 else n  # depth gain
-        if m in [Conv_C3,Bottleneck, SPPF,C3,RepBlock,SimConv,RepVGGBlock,Transpose,SimSPPF]:
+        if m in [Conv_C3,Bottleneck, SPPF,C3,RepBlock,SimConv,RepVGGBlock,Transpose,SimSPPF,BepC3]:
             c1, c2 = ch[f], args[0]
             c2 = make_divisible(c2 * gw, 8)
 
@@ -39,7 +39,7 @@ def parse_model(d, ch = 3):  # model_dict, input_channels(3)
             c2 = sum(ch[x] for x in f)
         elif m is Out:
             pass
-        elif m in [Stem,BepC3,ConvWrapper,Transpose]:
+        elif m in [Stem,ConvWrapper,Transpose]:
             c1 = ch[f]
             c2 = args[0]
             args = [c1, c2, *args[1:]]
@@ -191,12 +191,13 @@ def build_network(config, channels, num_classes, anchors, num_layers):
     return backbone, neck, head
 
 def build_network_yaml(config, channels, num_classes, anchors, num_layers):
-
+    depth_mul = config.model.depth_multiple
+    width_mul = config.model.width_multiple
     num_anchors = config.model.head.anchors
     use_dfl = config.model.head.use_dfl
     reg_max = config.model.head.reg_max
     channels_list = config.model.head.effidehead_channels
-
+    channels_list = [make_divisible(i * width_mul, 8) for i in (channels_list)]
 
     head_layers = build_effidehead_layer(channels_list, num_anchors, num_classes, reg_max)
     head = Detect(num_classes, anchors, num_layers, head_layers=head_layers, use_dfl=use_dfl)
