@@ -1,19 +1,15 @@
 # YOLOv6t model
 model = dict(
     type='YOLOv6t',
-    pretrained='weights/yolov6t_yaml.pt',
+    pretrained='weights/yolov6t_yaml_new.pt',
     build_type='yaml',
     yaml_file='configs/yaml/yolov6t.yaml',
     depth_multiple=0.33,
     width_multiple=0.375,
     head=dict(
         type='EffiDeHead',
-        effidehead_channels=[64, 128, 256, 512, 1024, 256, 128, 128, 256, 256, 512],
-        in_channels=[128, 256, 512],
         num_layers=3,
-        begin_indices=24,
         anchors=1,
-        out_indices=[17, 20, 23],
         strides=[8, 16, 32],
         iou_type='siou',
         use_dfl=False,

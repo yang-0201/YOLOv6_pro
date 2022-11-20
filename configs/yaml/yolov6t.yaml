@@ -31,8 +31,13 @@ neck:
 
    [-1, 1, SimConv, [256, 3, 2]],
    [[-1, 10], 1, Concat, [1]],  # cat head P5
-   [-1, 12, RepBlock, [512]],  # 23 (P5/32-large)
-   [[17,20,23],1,Out,[]]]
+   [-1, 12, RepBlock, [512]]]  # 23 (P5/32-large)
+
+effidehead:
+  [[17, 1, Head_layers, [128,0]],#if use_dfl is False, please set reg_max to 0
+  [20, 1, Head_layers, [256,0]],
+  [23, 1, Head_layers, [512,0]],
+  [[24,25,26],1,Out,[]]]
 
 
 

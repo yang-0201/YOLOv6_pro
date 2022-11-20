@@ -1,21 +1,21 @@
-# YOLOv6m model
+# YOLOv6l model
 model = dict(
-    type='YOLOv6m',
-    pretrained='weights/yolov6m_yaml_new.pt',
-    build_type='yaml',
-    yaml_file='configs/yaml/yolov6m.yaml',
-    depth_multiple=0.60,
-    width_multiple=0.75,
+    type='YOLOv6l_yaml',
+    pretrained="weights/yolov6l6_p2_yaml_new.pt",
+    build_type = 'yaml',
+    yaml_file = 'configs/yaml/yolov6l6_p2.yaml',
+    depth_multiple=1.0,
+    width_multiple=1.0,
     head=dict(
         type='EffiDeHead',
-        num_layers=3,
+        num_layers=4,
         anchors=1,
-        strides=[8, 16, 32],
+        strides=[4, 8, 16, 32],
         iou_type='giou',
         use_dfl=True,
         reg_max=16, #if use_dfl is False, please set reg_max to 0
         distill_weight={
-            'class': 1.0,
+            'class': 2.0,
             'dfl': 1.0,
         },
     )
@@ -46,3 +46,5 @@ data_aug = dict(
     mosaic=1.0,
     mixup=0.243,
 )
+training_mode = "conv_silu"
+# use normal conv to speed up training and further improve accuracy.

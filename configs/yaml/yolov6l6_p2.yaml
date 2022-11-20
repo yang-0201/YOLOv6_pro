@@ -21,20 +21,31 @@ neck:
    [-1, 1, SimConv, [128, 1, 1]],
    [-1, 1, Transpose, [128]],
    [[-1, 4], 1, Concat, [1]],  #384
-   [-1, 1, BepC3, [128, 12, "ConvWrapper"]],   #out
+   [-1, 1, BepC3, [128, 12, "ConvWrapper"]],   #out  17
+
+   [ -1, 1, SimConv, [ 64, 1, 1 ] ],
+   [ -1, 1, Transpose, [ 64 ] ],
+   [ [ -1, 2 ], 1, Concat, [ 1 ] ],  #384
+   [ -1, 1, BepC3, [ 64, 12, "ConvWrapper" ] ],   #out  21
+
+    [ -1, 1, SimConv, [ 64, 3, 2 ] ],
+    [ [ -1, 18 ], 1, Concat, [ 1 ] ],  # cat head P4
+    [ -1, 1, BepC3, [ 128, 12, "ConvWrapper" ] ],  # 24 (P4/16-medium)
 
    [-1, 1, SimConv, [128, 3, 2]],
    [[-1, 14], 1, Concat, [1]],  # cat head P4
-   [-1, 1, BepC3, [256, 12, "ConvWrapper"]],  # 20 (P4/16-medium)
+   [-1, 1, BepC3, [256, 12, "ConvWrapper"]],  # 27 (P4/16-medium)
 
    [-1, 1, SimConv, [256, 3, 2]],
    [[-1, 10], 1, Concat, [1]],  # cat head P5
-   [-1, 1, BepC3, [512, 12, "ConvWrapper"]]]  # 23 (P5/32-large)
+   [-1, 1, BepC3, [512, 12, "ConvWrapper"]]]  # 30 (P5/32-large)
 
 effidehead:
-  [[17, 1, Head_layers, [128]],
-  [20, 1, Head_layers, [256]],
-  [23, 1, Head_layers, [512]],
-  [[24,25,26],1,Out,[]]]
+  [
+  [21, 1, Head_layers, [64]],
+  [24, 1, Head_layers, [128]],
+  [27, 1, Head_layers, [256]],
+  [30, 1, Head_layers, [512]],
+  [[31, 32, 33, 34],1,Out,[]]]
 
 
