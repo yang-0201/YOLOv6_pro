@@ -250,7 +250,8 @@ class Trainer:
                                         reg_max=self.cfg.model.head.reg_max,
                                         iou_type=self.cfg.model.head.iou_type)
         if self.args.distill:
-            self.compute_loss_distill = ComputeLoss_distill(num_classes=self.data_dict['nc'],
+            self.compute_loss_distill = ComputeLoss_distill(fpn_strides = self.cfg.model.head.strides,
+                                                            num_classes=self.data_dict['nc'],
                                                             ori_img_size=self.img_size,
                                                             use_dfl=self.cfg.model.head.use_dfl,
                                                             reg_max=self.cfg.model.head.reg_max,
