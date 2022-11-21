@@ -62,3 +62,7 @@ YOLOv6l
 ```shell
 python tools/train.py --conf-configs/model_yaml/yolov6l_yaml.py --data data/car.yaml --device 0 --img 640
 ```
+## Acknowledgements
+* [https://github.com/meituan/YOLOv6](https://github.com/meituan/YOLOv6)
+* [https://github.com/ultralytics/yolov5](https://github.com/ultralytics/yolov5)
+* [https://github.com/iscyy/yoloair](https://github.com/iscyy/yoloair)
