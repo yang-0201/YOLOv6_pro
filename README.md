@@ -1,7 +1,13 @@
 # YOLOv6_pro
 Make it easier for yolov6 to change the network structure.<br>
 Build a YOLOv6 network using the YOLOv5 style of building networks, modifying your modules in the yaml file as you wish.<br>
-Already supported models: `YOLOV6l`, `YOLOV6m`, `YOLOV6t`, `YOLOV6s`
+Already supported models:
+<li>YOLOV6l_yaml</li>
+<li>YOLOV6m_yaml</li>
+<li>YOLOV6s_yaml</li>
+<li>YOLOV6t_yaml</li>
+<li>YOLOV6l6_p2_yaml（大尺寸训练，四个输出层）</li>
+
 
 ## 数据集配置
 ```
@@ -29,10 +35,11 @@ nc: 3  # number of classes
 names: ["car","person","bike"] #classes names
 ```
 ## 预训练权重
-  [YOLOv6l_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml.pt)<br>
-  [YOLOv6m_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6m_yaml.pt)<br>
-  [YOLOv6s_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6s_yaml.pt)<br>
-  [YOLOv6t_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6t_yaml.pt)<br>
+  [YOLOv6l_yaml_new.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml_new.pt)<br>
+  [YOLOv6m_yaml_new.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6m_yaml_new.pt)<br>
+  [YOLOv6s_yaml_new.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6s_yaml_new.pt)<br>
+  [YOLOv6t_yaml_new.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6t_yaml_new.pt)<br>
+  [YOLOv6l6_p2_yaml_new](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l6_p2_yaml_new.pt)<br>
 ## 训练命令
 YOLOv6t
 ```shell
