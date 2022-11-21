@@ -244,7 +244,8 @@ class Trainer:
         self.best_ap, self.ap = 0.0, 0.0
         self.best_stop_strong_aug_ap = 0.0
         self.evaluate_results = (0, 0) # AP50, AP50_95
-        self.compute_loss = ComputeLoss(num_classes=self.data_dict['nc'],
+        self.compute_loss = ComputeLoss(fpn_strides = self.cfg.model.head.strides,
+                                        num_classes=self.data_dict['nc'],
                                         ori_img_size=self.img_size,
                                         use_dfl=self.cfg.model.head.use_dfl,
                                         reg_max=self.cfg.model.head.reg_max,
