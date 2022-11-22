@@ -1,5 +1,5 @@
 # YOLOv6_pro
-让 `YOLOv6` 更换网络结构更为方便 <br><br>
+让 `YOLOv6` 更换网络结构更为便捷 <br><br>
 基于官方 `YOLOv6` 的整体架构，使用 `YOLOv5` 的网络构建方式构建一个 `YOLOv6` 网络，包括 `backbone`，`neck`，`effidehead` 结构 <br><br>
 可以在 `yaml` 文件中任意修改或添加模块,并且每个修改的文件都是独立可运行的 <br><br>
 预训练权重已经从官方权重转换，确保可以匹配 <br>
@@ -77,7 +77,7 @@ effidehead:
   [[17, 1, Head_layers, [128]],
   [20, 1, Head_layers, [256]],
   [23, 1, Head_layers, [512]],
-  [[24,25,26],1,Out,[]]]
+  [[24, 25, 26], 1, Out, []]]
 
 ```
 
