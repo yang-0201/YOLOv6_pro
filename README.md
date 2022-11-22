@@ -32,12 +32,55 @@ data/labels/val 中放入你的验证集标签
 ```
 ### data.yaml 配置
 ```shell
-train: data/images/train # train images
-val: data/images/val # val images
+train: data/images/train # 训练集路径
+val: data/images/val # 验证集路径
 is_coco: False
-nc: 3  # number of classes
-names: ["car","person","bike"] #classes names
+nc: 3  # 设置为你的类别数量
+names: ["car","person","bike"] #类别名称
 ```
+### 网络结构文件配置
+以yolov6l.yaml为例
+```shell
+depth_multiple: 1.0  # model depth multiple
+width_multiple: 1.0  # layer channel multiple
+backbone:
+  # [from, number, module, args]
+  [[-1, 1, ConvWrapper, [64, 3, 2]],  # 0-P1/2
+   [-1, 1, ConvWrapper, [128, 3, 2]],  # 1-P2/4
+   [-1, 1, BepC3, [128, 6, "ConvWrapper"]],
+   [-1, 1, ConvWrapper, [256, 3, 2]],  # 3-P3/8
+   [-1, 1, BepC3, [256, 12, "ConvWrapper"]],
+   [-1, 1, ConvWrapper, [512, 3, 2]],  # 5-P4/16
+   [-1, 1, BepC3, [512, 18, "ConvWrapper"]],
+   [-1, 1, ConvWrapper, [1024, 3, 2]],  # 7-P5/32
+   [-1, 1, BepC3, [1024,6, "ConvWrapper"]],
+   [-1, 1, SPPF, [1024, 5]]]  # 9
+neck:
+   [[-1, 1, SimConv, [256, 1, 1]],
+   [-1, 1, Transpose, [256]],
+   [[-1, 6], 1, Concat, [1]],  #768
+   [-1, 1, BepC3, [256, 12, "ConvWrapper"]],
+
+   [-1, 1, SimConv, [128, 1, 1]],
+   [-1, 1, Transpose, [128]],
+   [[-1, 4], 1, Concat, [1]],  #384
+   [-1, 1, BepC3, [128, 12, "ConvWrapper"]],   #17 (P3/8-small)
+
+   [-1, 1, SimConv, [128, 3, 2]],
+   [[-1, 14], 1, Concat, [1]],  
+   [-1, 1, BepC3, [256, 12, "ConvWrapper"]],  # 20 (P4/16-medium)
+
+   [-1, 1, SimConv, [256, 3, 2]],
+   [[-1, 10], 1, Concat, [1]], 
+   [-1, 1, BepC3, [512, 12, "ConvWrapper"]]]  # 23 (P5/32-large)
+effidehead:
+  [[17, 1, Head_layers, [128]],
+  [20, 1, Head_layers, [256]],
+  [23, 1, Head_layers, [512]],
+  [[24,25,26],1,Out,[]]]
+
+```
+
 ## 预训练权重
   [YOLOv6l_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml_new.pt)<br>
   [YOLOv6m_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6m_yaml_new.pt)<br>
