@@ -74,8 +74,8 @@ neck:
    [[-1, 10], 1, Concat, [1]], 
    [-1, 1, BepC3, [512, 12, "ConvWrapper"]]]  # 23 (P5/32-large)
 effidehead:
-  [[17, 1, Head_layers, [128]],
-  [20, 1, Head_layers, [256]],
+  [[17, 1, Head_layers, [128]], 如果为m，l模型 并且使用dfl损失，该项设置为[通道数，16，你的类别数]
+  [20, 1, Head_layers, [256]], 如果为s，t模型 并且不使用dfl损失，该项需要设置为[通道数，0，你的类别数]
   [23, 1, Head_layers, [512]],
   [[24, 25, 26], 1, Out, []]]
 
