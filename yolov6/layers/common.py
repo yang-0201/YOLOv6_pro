@@ -597,7 +597,46 @@ class Head_layers(nn.Module):
         reg_output = self.reg_pred(reg_feat)
 
         return x, cls_output, reg_output
+class Head_out(nn.Module):
+    def __init__(self,in_channels,reg_max = 16,num_classes = 3, num_anchors = 1):
+        super(Head_out, self).__init__()
+        self.stem = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=1, stride=1)
+        # cls_conv0
+        self.cls_conv = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=1)
+        # reg_conv0
+        self.reg_conv = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=1)
+        # cls_pred0
+        self.cls_pred = nn.Conv2d(in_channels=in_channels, out_channels=num_classes * num_anchors, kernel_size=1)
+        # reg_pred0
+        self.reg_pred = nn.Conv2d(in_channels=in_channels, out_channels=4 * (reg_max + num_anchors), kernel_size=1)
+        self.prior_prob = 1e-2
+        self.initialize_biases()
+    def initialize_biases(self):
 
+
+        b = self.cls_pred.bias.view(-1, )
+        b.data.fill_(-math.log((1 - self.prior_prob) / self.prior_prob))
+        self.cls_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+        w = self.cls_pred.weight
+        w.data.fill_(0.)
+        self.cls_pred.weight = torch.nn.Parameter(w, requires_grad=True)
+
+
+        b = self.reg_pred.bias.view(-1, )
+        b.data.fill_(1.0)
+        self.reg_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+        w = self.reg_pred.weight
+        w.data.fill_(0.)
+        self.reg_pred.weight = torch.nn.Parameter(w, requires_grad=True)
+
+    def forward(self,x):
+        cls_x = x
+        reg_x = x
+        cls_output = self.cls_pred(cls_x)
+        cls_output = torch.sigmoid(cls_output)
+        reg_output = self.reg_pred(reg_x)
+
+        return x, cls_output, reg_output
 # import torch
 # import torch.nn as nn
 # from mmcv.cnn import  DepthwiseSeparableConvModule
