@@ -47,6 +47,11 @@ def parse_model(d, ch = 3):  # model_dict, input_channels(3)
             c1 = ch[f]
             c2 = args[0]
             args = [c1, c2, *args[1:]]
+        elif m in [ConvBNAct,GiraffeNeckV2]:
+            c1 = ch[f]
+            c2 = args[0]
+            c2 = make_divisible(c2 * gw, 8)
+            args = [c1,c2,*args[1:]]
         else:
             c2 = ch[f]
 
