@@ -10,8 +10,9 @@
 <li>YOLOV6t_yaml</li><br>
 大尺寸模型，四个输出层：
 <li>YOLOV6l6_p2_yaml</li>
-<li>YOLOV6l6_yaml</li>
-
+<li>YOLOV6l6_yaml</li><br>
+增加DAMO YOLO 中的 neck：GiraffeNeckV2<br>
+已在 yolov6l,yolov6t 中替换
 
 ## 数据集配置
 ```
