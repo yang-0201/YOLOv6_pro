@@ -267,7 +267,9 @@ class Detect_yaml(nn.Module):
             reg_distri_list = torch.cat(reg_distri_list, axis=1)
 
             if self.nl == 4:
-                x = [x[0][0], x[1][0], x[2][0], x[3][0]]
+                x = [x[0][0], x[1][0], x[2][0], x[3][0]]           
+            elif self.nl == 5:
+                x = [x[0][0], x[1][0], x[2][0], x[3][0],x[4][0]]
             else:
                 x = [x[0][0], x[1][0], x[2][0]]
             return x, cls_score_list, reg_distri_list
@@ -277,6 +279,8 @@ class Detect_yaml(nn.Module):
 
             if self.nl == 4:
                 x1 = [x[0][0], x[1][0], x[2][0], x[3][0]]
+            elif self.nl == 5:
+                x1 = [x[0][0], x[1][0], x[2][0], x[3][0],x[4][0]]
             else:
                 x1 = [x[0][0], x[1][0], x[2][0]]
             anchor_points, stride_tensor = generate_anchors(
