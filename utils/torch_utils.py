@@ -227,7 +227,7 @@ def fuse_conv_and_bn(conv, bn):
     return fusedconv
 
 
-def model_info(model, verbose=False, img_size=640):
+def model_info(model, verbose=False, img_size=640, cfg = None):
     # Model information. img_size may be int or list, i.e. img_size=640 or img_size=[640, 320]
     n_p = sum(x.numel() for x in model.parameters())  # number parameters
     n_g = sum(x.numel() for x in model.parameters() if x.requires_grad)  # number gradients
@@ -240,7 +240,7 @@ def model_info(model, verbose=False, img_size=640):
 
     try:  # FLOPs
         from thop import profile
-        stride = max(int(model.stride.max()), 32) if hasattr(model, 'stride') else 32
+        stride = cfg.model.head.strides[-1]
         img = torch.zeros((1, 3, stride, stride), device=next(model.parameters()).device)  # input
         flops = profile(deepcopy(model), inputs=(img,), verbose=False)[0] / 1E9 * 2  # stride GFLOPs
         img_size = img_size if isinstance(img_size, list) else [img_size, img_size]  # expand if int/float
