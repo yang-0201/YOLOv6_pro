@@ -217,6 +217,9 @@ def build_network_yaml(config, channels, num_classes, anchors, num_layers):
     return head
 def build_model(cfg, num_classes, device):
     model = Model(cfg, channels=3, num_classes=num_classes, anchors=cfg.model.head.anchors).to(device)
+    from yolov6.utils.events import LOGGER
+    from yolov6.utils.torch_utils import get_model_info
+    LOGGER.info("Model Summary: {}".format(get_model_info(model, img_size = img_size,cfg = cfg)))
     return model
 
 from yolov6.utils.general import dist2bbox
