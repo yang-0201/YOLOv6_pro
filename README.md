@@ -9,7 +9,8 @@
 <li>YOLOV6l_yaml</li>
 <li>YOLOV6m_yaml</li>
 <li>YOLOV6s_yaml</li>
-<li>YOLOV6t_yaml</li><br>
+<li>YOLOV6t_yaml</li>
+<li>YOLOV6n_yaml</li><br>
 大尺寸模型，四个输出层：
 <li>YOLOV6l6_p2_yaml</li>
 <li>YOLOV6l6_yaml</li><br>
