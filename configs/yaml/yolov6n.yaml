@@ -1,5 +1,5 @@
 depth_multiple: 0.33  # model depth multiple
-width_multiple: 0.50  # layer channel multiple
+width_multiple: 0.25  # layer channel multiple
 
 backbone:
   # [from, number, module, args]

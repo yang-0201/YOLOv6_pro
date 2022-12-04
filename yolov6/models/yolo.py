@@ -219,7 +219,7 @@ def build_model(cfg, num_classes, device,img_size):
     from yolov6.utils.events import LOGGER
     from yolov6.utils.torch_utils import get_model_info
     LOGGER.info("Model Summary: {}".format(get_model_info(model, img_size = img_size,cfg = cfg)))
-    LOGGER.info("The number of parameters and floating point operations counted before training "+
+    LOGGER.info("Because of the use of heavy parameterization, the number of parameters and floating point operations counted before training "+
                 "may not be accurate and need to be verified using eval.py in the validation phase to get the correct information")
     return model
 

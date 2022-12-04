@@ -15,12 +15,12 @@ backbone:
 neck:
    [[-1, 1, SimConv, [256, 1, 1]],
    [-1, 1, Transpose, [256]],
-   [[-1, 6], 1, Concat, [1]],  #768
+   [[-1, 6], 1, Concat, [1]],
    [-1, 1, BepC3, [256, 7, "RepVGGBlock", 2/3]],
 
    [-1, 1, SimConv, [128, 1, 1]],
    [-1, 1, Transpose, [128]],
-   [[-1, 4], 1, Concat, [1]],  #384
+   [[-1, 4], 1, Concat, [1]],
    [-1, 1, BepC3, [128, 7, "RepVGGBlock", 2/3]],   #out
 
    [-1, 1, SimConv, [128, 3, 2]],
@@ -31,9 +31,9 @@ neck:
    [[-1, 10], 1, Concat, [1]],  # cat head P5
    [-1, 1, BepC3, [512, 7, "RepVGGBlock", 2/3]]]  # 23 (P5/32-large)
 effidehead:
-  [[17, 1, Head_layers, [128]],
-  [20, 1, Head_layers, [256]],
-  [23, 1, Head_layers, [512]],
-  [[24,25,26],1,Out,[]]]
+  [[17, 1, Head_layers, [128, 16]],
+  [20, 1, Head_layers, [256, 16]],
+  [23, 1, Head_layers, [512, 16]],
+  [[24, 25, 26],1,Out,[]]]
 
 
