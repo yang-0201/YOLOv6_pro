@@ -10,34 +10,34 @@ backbone:
    [-1, 1, ConvWrapper, [512, 3, 2]],  # 5-P4/16
    [-1, 1, BepC3, [512, 18, "ConvWrapper"]],
    [ -1, 1, ConvWrapper, [ 768, 3, 2 ] ],  # 7-P5/32
-   [ -1, 1, BepC3, [ 768,6, "ConvWrapper" ] ],
-   [-1, 1, ConvWrapper, [1024, 3, 2]],  # 7-P5/32
-   [-1, 1, BepC3, [1024,6, "ConvWrapper"]],
+   [ -1, 1, BepC3, [ 768, 6, "ConvWrapper" ] ],
+   [-1, 1, ConvWrapper, [1024, 3, 2]],  # 7-P6/64
+   [-1, 1, BepC3, [1024, 6, "ConvWrapper"]],
 
-   [-1, 1, ConvWrapper, [1280, 3, 2]],  # 7-P5/32
-   [-1, 1, BepC3, [1280,6, "ConvWrapper"]],
+   [-1, 1, ConvWrapper, [1280, 3, 2]],  # 7-P7/128
+   [-1, 1, BepC3, [1280, 6, "ConvWrapper"]],
    [-1, 1, SPPF, [1280, 5]]]  # 13
 neck:
    [
    [ -1, 1, SimConv, [ 512, 1, 1 ] ], #14
    [ -1, 1, Transpose, [ 512 ] ],
-   [ [ -1, 10 ], 1, Concat, [ 1 ] ],  #768
+   [ [ -1, 10 ], 1, Concat, [ 1 ] ],
    [ -1, 1, BepC3, [ 512, 12, "ConvWrapper" ] ],
 
 
    [-1, 1, SimConv, [384, 1, 1]], #18
    [-1, 1, Transpose, [384]],
-   [[-1, 8], 1, Concat, [1]],  #768
+   [[-1, 8], 1, Concat, [1]],
    [-1, 1, BepC3, [384, 12, "ConvWrapper"]],
 
    [-1, 1, SimConv, [256, 1, 1]], #22
    [-1, 1, Transpose, [256]],
-   [[-1, 6], 1, Concat, [1]],  #768
+   [[-1, 6], 1, Concat, [1]],
    [-1, 1, BepC3, [256, 12, "ConvWrapper"]],
 
    [-1, 1, SimConv, [128, 1, 1]], #26
    [-1, 1, Transpose, [128]],
-   [[-1, 4], 1, Concat, [1]],  #384
+   [[-1, 4], 1, Concat, [1]],
    [-1, 1, BepC3, [128, 12, "ConvWrapper"]],   #out  29
 
    [-1, 1, SimConv, [128, 3, 2]], #30
@@ -49,20 +49,20 @@ neck:
    [-1, 1, BepC3, [512, 12, "ConvWrapper"]],  # 35 (P5/32-large)
 
    [-1, 1, SimConv, [384, 3, 2]],
-   [[-1, 18], 1, Concat, [1]],  # cat head P5
-   [-1, 1, BepC3, [768, 12, "ConvWrapper"]],  # 38 (P5/32-large)
+   [[-1, 18], 1, Concat, [1]],  # cat head P6
+   [-1, 1, BepC3, [768, 12, "ConvWrapper"]],  # 38 (P6/64-xlarge)
 
   [ -1, 1, SimConv, [ 512, 3, 2 ] ],
-  [ [ -1, 14 ], 1, Concat, [ 1 ] ],  # cat head P5
-  [ -1, 1, BepC3, [ 1024, 12, "ConvWrapper" ] ]]  # 41 (P5/32-large)
+  [ [ -1, 14 ], 1, Concat, [ 1 ] ],  # cat head P7
+  [ -1, 1, BepC3, [ 1024, 12, "ConvWrapper" ] ]]  # 41 (P7/128-xxlarge)
 
 effidehead:
   [
-  [29, 1, Head_layers, [128,16,8]],
-  [32, 1, Head_layers, [256,16,8]],
-  [35, 1, Head_layers, [512,16,8]],
-  [38, 1, Head_layers, [768,16,8]],
-  [41, 1, Head_layers, [1024,16,8]],
-  [[42, 43, 44, 45,46],1 ,Out ,[]]]
+  [29, 1, Head_layers, [128, 16]],
+  [32, 1, Head_layers, [256, 16]],
+  [35, 1, Head_layers, [512, 16]],
+  [38, 1, Head_layers, [768, 16]],
+  [41, 1, Head_layers, [1024, 16]],
+  [[42, 43, 44, 45, 46], 1 ,Out , []]]
 
 

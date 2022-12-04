@@ -17,12 +17,12 @@ backbone:
 neck:
   [[-1, 1, SimConv, [256, 1, 1]],
    [-1, 1, Transpose, [256]],
-   [[-1, 6], 1, Concat, [1]],  #768
+   [[-1, 6], 1, Concat, [1]],
    [-1, 12, RepBlock, [256]],
 
    [-1, 1, SimConv, [128, 1, 1]],
    [-1, 1, Transpose, [128]],
-   [[-1, 4], 1, Concat, [1]],  #384
+   [[-1, 4], 1, Concat, [1]],
    [-1, 12, RepBlock, [128]],   #out
 
    [-1, 1, SimConv, [128, 3, 2]],
@@ -34,10 +34,10 @@ neck:
    [-1, 12, RepBlock, [512]]]  # 23 (P5/32-large)
 
 effidehead:
-  [[17, 1, Head_layers, [128,0]],#if use_dfl is False, please set reg_max to 0
-  [20, 1, Head_layers, [256,0]],
-  [23, 1, Head_layers, [512,0]],
-  [[24,25,26],1,Out,[]]]
+  [[17, 1, Head_layers, [128, 0]],#if use_dfl is False, please set reg_max to 0
+  [20, 1, Head_layers, [256, 0]],
+  [23, 1, Head_layers, [512, 0]],
+  [[24, 25, 26],1,Out, []]]
 
 
 

@@ -30,6 +30,9 @@ from yolov6.utils.nms import xywh2xyxy
 
 class Trainer:
     def __init__(self, args, cfg, device):
+        if args.wandb:
+            import wandb
+            wandb.init(project="YOLOV6_pro", name=args.name,entity="yangyang0201", config=args) #entity is your wandb account name
         self.args = args
         self.cfg = cfg
         self.device = device
@@ -145,6 +148,7 @@ class Trainer:
         # backward
         self.scaler.scale(total_loss).backward()
         self.loss_items = loss_items
+        self.total_loss = total_loss
         self.update_optimizer()
 
     def eval_and_save(self):
@@ -181,7 +185,10 @@ class Trainer:
             # log for learning rate
             lr = [x['lr'] for x in self.optimizer.param_groups]
             self.evaluate_results = list(self.evaluate_results) + lr
-
+            if self.args.wandb:
+                import wandb
+                wandb.log({"train/all_loss": self.total_loss, "train/iou_loss": self.loss_items[0], "train/dfl_loss": self.loss_items[1],
+                           "train/cls_loss": self.loss_items[2],"metrics/mAP_0.5": self.evaluate_results[0], "metrics/mAP_0.5:0.95": self.evaluate_results[1]})
             # log for tensorboard
             write_tblog(self.tblogger, self.epoch, self.evaluate_results, self.mean_loss)
             # save validation predictions to tensorboard

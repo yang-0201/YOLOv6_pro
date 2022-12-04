@@ -10,16 +10,16 @@ backbone:
    [-1, 1, ConvWrapper, [512, 3, 2]],  # 5-P4/16
    [-1, 1, BepC3, [512, 18, "ConvWrapper"]],
    [-1, 1, ConvWrapper, [1024, 3, 2]],  # 7-P5/32
-   [-1, 1, BepC3, [1024,6, "ConvWrapper"]],
+   [-1, 1, BepC3, [1024, 6, "ConvWrapper"]],
    [-1, 1, SPPF, [1024, 5]]]  # 9
 neck:
    [
-    [6, 1,ConvBNAct,[512, 3, 2]],
+    [6, 1, ConvBNAct, [512, 3, 2]],
     [[-1, 9], 1, Concat, [1]],
     [-1, 1, GiraffeNeckV2, [1024, 1.5]],  #512+1024 merge_3  12
 
     [-1, 1, nn.Upsample, [None, 2, 'nearest']],
-    [4, 1,ConvBNAct,[256, 3, 2]],
+    [4, 1, ConvBNAct, [256, 3, 2]],
     [[-1, 6, 13], 1, Concat, [1]],
     [-1, 1, GiraffeNeckV2, [512, 1.5]], #256+512+1024 merge_4 16
 
@@ -27,20 +27,20 @@ neck:
     [[-1, 4], 1, Concat, [1]],
     [-1, 1, GiraffeNeckV2, [256, 1.5]], # 512+256  merge_5  19  out
 
-    [-1, 1,ConvBNAct,[256, 3, 2]],
+    [-1, 1, ConvBNAct, [256, 3, 2]],
     [[-1, 16], 1, Concat, [1]],
     [-1, 1, GiraffeNeckV2, [512, 1.5]], # 512+256  merge_7  22  out
 
-    [16, 1,ConvBNAct,[512, 3, 2]],
-    [-2, 1,ConvBNAct,[512, 3, 2]],
-    [[-1, 12,-2], 1, Concat, [1]],
+    [16, 1, ConvBNAct, [512, 3, 2]],
+    [-2, 1, ConvBNAct, [512, 3, 2]],
+    [[-1, 12, -2], 1, Concat, [1]],
     [-1, 1, GiraffeNeckV2, [1024, 1.5]], # 512+512+1024 merge_6 26  out
    ]
 
 effidehead:
-  [[19, 1,Head_out , [256,16,8]],
-  [22, 1, Head_out, [512,16,8]],
-  [26, 1, Head_out, [1024,16,8]],
-  [[27,28,29],1,Out,[]]]
+  [[19, 1,Head_out , [256, 16]],
+  [22, 1, Head_out, [512, 16]],
+  [26, 1, Head_out, [1024, 16]],
+  [[27, 28, 29], 1, Out, []]]
 
 

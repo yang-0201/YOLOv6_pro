@@ -10,7 +10,7 @@ backbone:
    [-1, 1, ConvWrapper, [512, 3, 2]],  # 5-P4/16
    [-1, 1, BepC3, [512, 18, "ConvWrapper"]],
    [-1, 1, ConvWrapper, [1024, 3, 2]],  # 7-P5/32
-   [-1, 1, BepC3, [1024,6, "ConvWrapper"]],
+   [-1, 1, BepC3, [1024, 6, "ConvWrapper"]],
    [-1, 1, SPPF, [1024, 5]]]  # 9
 neck:
    [[-1, 1, SimConv, [256, 1, 1]],
@@ -42,10 +42,10 @@ neck:
 
 effidehead:
   [
-  [21, 1, Head_layers, [64]],
-  [24, 1, Head_layers, [128]],
-  [27, 1, Head_layers, [256]],
-  [30, 1, Head_layers, [512]],
+  [21, 1, Head_layers, [64, 16]],
+  [24, 1, Head_layers, [128, 16]],
+  [27, 1, Head_layers, [256, 16]],
+  [30, 1, Head_layers, [512, 16]],
   [[31, 32, 33, 34],1,Out,[]]]
 
 
