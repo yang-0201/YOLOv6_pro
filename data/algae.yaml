@@ -1,0 +1,10 @@
+# Please insure that your custom_dataset are put in same parent dir with YOLOv6_DIR
+train: algae/images/train # train images
+val: algae/images/val # val images
+test: algae/images/train # test images (optional)
+
+# whether it is coco dataset, only coco dataset should be set to True.
+is_coco: False
+# Classes
+nc: 8  # number of classes
+names: ["0","1","2","3","4","5","6","7"]
