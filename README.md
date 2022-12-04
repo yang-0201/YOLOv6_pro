@@ -5,6 +5,11 @@
 后续会基于 `yolov5` 和 `yoloair` 中的模块加入更多的网络结构改进 <br><br>
 预训练权重已经从官方权重转换，确保可以匹配 <br><br>
 我们使用的 `yoloair` 和 `YOLOv6 pro` 框架在 IEEE UV 2022 "Vision Meets Alage" 目标检测竞赛中取得第一名！
+
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/89863442/205481197-8ad8a8e0-1f78-4ac4-a29c-efc8a39ccd10.png" align="middle" width = "1000" />
+</p>
+
 ## 已经支持的模型:
 <li>YOLOV6l_yaml</li>
 <li>YOLOV6m_yaml</li>
