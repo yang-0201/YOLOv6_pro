@@ -18,7 +18,8 @@
 <li>YOLOV6n_yaml</li><br>
 大尺寸模型，四个输出层：
 <li>YOLOV6l6_p2_yaml</li>
-<li>YOLOV6l6_yaml</li><br>
+<li>YOLOV6l6_yaml</li>
+<li>YOLOV6n6_yaml</li><br>
 增加DAMO YOLO 中的 neck：GiraffeNeckV2<br>
 已在 yolov6l, yolov6t 中替换
 
@@ -112,6 +113,8 @@ effidehead:
 大尺寸模型<br>
   [YOLOv6-L6-p2.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l6_p2_yaml_new.pt)<br>
   [YOLOv6-L6.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l6_yaml_new.pt)<br>
+  [YOLOv6-N6.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6n6_yaml_new.pt)<br>
+tips：其中大尺寸模型无 coco 预训练权重，而是从小模型的对应层转化而来
 ## 训练命令
 YOLOv6t
 ```shell
