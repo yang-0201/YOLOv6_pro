@@ -14,6 +14,17 @@
 增加DAMO YOLO 中的 neck：GiraffeNeckV2<br>
 已在 yolov6l,yolov6t 中替换
 
+## Benchmark
+| Model                                                        | Size | mAP<sup>val<br/>0.5:0.95              | Speed<sup>T4<br/>trt fp16 b1 <br/>(fps) | Speed<sup>T4<br/>trt fp16 b32 <br/>(fps) | Params<br/><sup> (M) | FLOPs<br/><sup> (G) |
+| :----------------------------------------------------------- | ---- | :------------------------------------ | --------------------------------------- | ---------------------------------------- | -------------------- | ------------------- |
+| [**YOLOv6-N**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6n_yaml_new.pt) | 640  | 35.9<sup>300e</sup><br/>36.3<sup>400e | 802                                     | 1234                                     | 4.3                  | 11.1                |
+| [**YOLOv6-T**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6t_yaml_new.pt) | 640  | 40.3<sup>300e</sup><br/>41.1<sup>400e | 449                                     | 659                                      | 15.0                 | 36.7                |
+| [**YOLOv6-S**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6s_yaml_new.pt) | 640  | 43.5<sup>300e</sup><br/>43.8<sup>400e | 358                                     | 495                                      | 17.2                 | 44.2                |
+| [**YOLOv6-M**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6m_yaml_new.pt) | 640  | 49.5                                  | 179                                     | 233                                      | 34.3                 | 82.2                |
+| [**YOLOv6-L-ReLU**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml_new.pt) | 640  | 51.7                                  | 113                                     | 149                                      | 58.5                 | 144.0               |
+| [**YOLOv6-L**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml_new.pt) | 640  | 52.5                                  | 98                                      | 121                                      | 58.5                 | 144.0               |
+- Speed is tested with TensorRT 7.2 on T4.
+- Data from YOLOv6 official
 ## 数据集配置
 ```
 data/images/train 中放入你的训练集图片
@@ -84,14 +95,14 @@ effidehead:
 
 ## 预训练权重（官方权重转化而来）
 基本模型<br>
-  [YOLOv6l.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml_new.pt)<br>
-  [YOLOv6m.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6m_yaml_new.pt)<br>
-  [YOLOv6s.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6s_yaml_new.pt)<br>
-  [YOLOv6t.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6t_yaml_new.pt)<br>
-  [YOLOv6n.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6n_yaml_new.pt)<br>
+  [YOLOv6-L.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml_new.pt)<br>
+  [YOLOv6-M.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6m_yaml_new.pt)<br>
+  [YOLOv6-S.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6s_yaml_new.pt)<br>
+  [YOLOv6-T.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6t_yaml_new.pt)<br>
+  [YOLOv6-N.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6n_yaml_new.pt)<br>
 大尺寸模型<br>
-  [YOLOv6l6_p2_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l6_p2_yaml_new.pt)<br>
-  [YOLOv6l6_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l6_yaml_new.pt)<br>
+  [YOLOv6-L6-p2.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l6_p2_yaml_new.pt)<br>
+  [YOLOv6-L6.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l6_yaml_new.pt)<br>
 ## 训练命令
 YOLOv6t
 ```shell
