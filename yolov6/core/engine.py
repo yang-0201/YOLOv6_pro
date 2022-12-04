@@ -48,6 +48,7 @@ class Trainer:
         # get data loader
         self.data_dict = load_yaml(args.data_path)
         self.num_classes = self.data_dict['nc']
+        self.do_pr_metric = False
         self.train_loader, self.val_loader = self.get_data_loader(args, cfg, self.data_dict)
         # get model and optimizer
         model = self.get_model(args, cfg, self.num_classes, device)
@@ -196,6 +197,8 @@ class Trainer:
 
     def eval_model(self):
         if not hasattr(self.cfg, "eval_params"):
+            if self.args.do_pr_metric:
+                self.do_pr_metric = True
             results, vis_outputs, vis_paths = eval.run(self.data_dict,
                             batch_size=self.batch_size // self.world_size * 2,
                             img_size=self.img_size,
@@ -203,6 +206,7 @@ class Trainer:
                             conf_thres=0.03,
                             dataloader=self.val_loader,
                             save_dir=self.save_dir,
+                            do_pr_metric=self.do_pr_metric,
                             task='train')
         else:
             def get_cfg_value(cfg_dict, value_str, default_value):

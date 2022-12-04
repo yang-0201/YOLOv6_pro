@@ -1,0 +1,56 @@
+depth_multiple: 0.33  # model depth multiple
+width_multiple: 0.25  # layer channel multiple
+
+backbone:
+  # [from, number, module, args]
+  [[-1, 1, RepVGGBlock, [64, 3, 2]],  # 0-P1/2
+   [-1, 1, RepVGGBlock, [128, 3, 2]],  # 1-P2/4
+   [-1, 6, RepBlock, [128]],
+   [-1, 1, RepVGGBlock, [256, 3, 2]],  # 3-P3/8
+   [-1, 12, RepBlock, [256]],
+   [-1, 1, RepVGGBlock, [512, 3, 2]],  # 5-P4/16
+   [-1, 18, RepBlock, [512]],
+   [-1, 1, RepVGGBlock, [768, 3, 2]],  # 7-P5/32
+   [-1, 6, RepBlock, [768]],
+   [ -1, 1, RepVGGBlock, [ 1024, 3, 2 ] ],  # 9-P6/64
+   [ -1, 6, RepBlock, [ 1024 ] ],
+   [-1, 1, SimSPPF, [1024, 5]]]  # 11
+
+neck:
+  [
+   [-1, 1, SimConv, [384, 1, 1]],
+   [-1, 1, Transpose, [384]],
+   [[-1, 8 ], 1, Concat, [1]],
+   [-1, 12, RepBlock, [384]],
+
+   [-1, 1, SimConv, [256, 1, 1]],
+   [-1, 1, Transpose, [256]],
+   [[-1, 6], 1, Concat, [1]],
+   [-1, 12, RepBlock, [256]],
+
+   [-1, 1, SimConv, [128, 1, 1]],
+   [-1, 1, Transpose, [128]],
+   [[-1, 4], 1, Concat, [1]],
+   [-1, 12, RepBlock, [128]],   # 23 (P3/8-small)
+
+   [-1, 1, SimConv, [128, 3, 2]],
+   [[-1, 20], 1, Concat, [1]],  # cat head P4
+   [-1, 12, RepBlock, [256]],  # 26 (P4/16-medium)
+
+   [-1, 1, SimConv, [256, 3, 2]],
+   [[-1, 16], 1, Concat, [1]],  # cat head P5
+   [-1, 12, RepBlock, [512]], #29 (P5/32-large)
+
+   [-1, 1, SimConv, [384, 3, 2]],
+   [[-1, 12], 1, Concat, [1]],  # cat head P6
+   [-1, 12, RepBlock, [768]] # 32 (P6/64-xlarge)
+  ]
+
+effidehead:
+  [[23, 1, Head_layers, [128, 0]],
+  [26, 1, Head_layers, [256, 0]],
+  [29, 1, Head_layers, [512, 0]],
+  [32, 1, Head_layers, [768, 0]],
+  [[33, 34, 35, 36], 1 ,Out , []]]
+
+

@@ -52,7 +52,8 @@ def get_args_parser(add_help=True):
     parser.add_argument('--teacher_model_path', type=str, default=None, help='teacher model path')
     parser.add_argument('--temperature', type=int, default=20, help='distill temperature')
     parser.add_argument('--yaml', type=str, default=None, help='build model by yaml')
-    parser.add_argument('--wandb', action='store_true', help='build model by yaml')
+    parser.add_argument('--wandb', action='store_true', help='wandb')
+    parser.add_argument('--do_pr_metric', type=str, default=False, help='wandb')
     return parser
 
 

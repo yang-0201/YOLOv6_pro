@@ -11,6 +11,7 @@ from yolov6.models.reppan import *
 from yolov6.models.effidehead import Detect, build_effidehead_layer
 from utils.general import LOGGER
 from utils.torch_utils import model_info
+from copy import deepcopy
 def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
     LOGGER.info(f"\n{'':>3}{'from':>18}{'n':>3}{'params':>10}  {'module':<40}{'arguments':<30}")
     gd, gw = d['depth_multiple'], d['width_multiple']
@@ -83,7 +84,6 @@ class Model(nn.Module):
         #self.mode = config.training_mode
             cfg = config.model.yaml_file
             import yaml  # for torch hub
-            from copy import deepcopy
             self.yaml_file = Path(cfg).name
             with open(cfg, encoding='ascii', errors='ignore') as f:
                 self.yaml = yaml.safe_load(f)  # model dict
@@ -217,7 +217,6 @@ def build_network_yaml(config, channels, num_classes, anchors, num_layers):
 def build_model(cfg, num_classes, device,img_size):
     model = Model(cfg, channels=3, num_classes=num_classes, anchors=cfg.model.head.anchors).to(device)
     from yolov6.utils.events import LOGGER
-    from yolov6.utils.torch_utils import get_model_info
     LOGGER.info("Model Summary: {}".format(get_model_info(model, img_size = img_size,cfg = cfg)))
     LOGGER.info("Because of the use of heavy parameterization, the number of parameters and floating point operations counted before training "+
                 "may not be accurate and need to be verified using eval.py in the validation phase to get the correct information")
@@ -317,3 +316,19 @@ class Detect_yaml(nn.Module):
                     cls_score_list
                 ],
                 axis=-1)
+
+def get_model_info(model, img_size=640, cfg = None):
+    """Get model Params and GFlops.
+    Code base on https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/utils/model_utils.py
+    """
+    from thop import profile
+    stride = cfg.model.head.strides[-1]  #32/64
+    img = torch.zeros((1, 3, stride, stride), device=next(model.parameters()).device)
+
+    flops, params = profile(deepcopy(model), inputs=(img,), verbose=False)
+    params /= 1e6
+    flops /= 1e9
+    img_size = img_size if isinstance(img_size, list) else [img_size, img_size]
+    flops *= img_size[0] * img_size[1] / stride / stride * 2  # Gflops
+    info = "Params: {:.2f}M, Gflops: {:.2f} for {}x{}".format(params, flops,img_size[0],img_size[1])
+    return info
