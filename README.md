@@ -1,19 +1,34 @@
-# YOLOv6_pro
-让 `YOLOv6` 更换网络结构更为便捷 <br><br>
+# YOLOv6 pro
+初衷让 `YOLOv6` 更换网络结构更为便捷 <br><br>
 基于官方 `YOLOv6` 的整体架构，使用 `YOLOv5` 的网络构建方式构建一个 `YOLOv6` 网络，包括 `backbone`，`neck`，`effidehead` 结构 <br><br>
-可以在 `yaml` 文件中任意修改或添加模块,并且每个修改的文件都是独立可运行的 <br><br>
-预训练权重已经从官方权重转换，确保可以匹配 <br>
+可以在 `yaml` 文件中任意修改或添加模块，并且每个修改的文件都是独立可运行的，目的是为了助力科研 <br><br>
+后续会基于 `yolov5` 和 `yoloair` 中的模块加入更多的网络结构改进 <br><br>
+预训练权重已经从官方权重转换，确保可以匹配 <br><br>
+我们使用的 `yoloair` 和 `YOLOv6 pro` 框架在 IEEE UV 2022 "Vision Meets Alage" 目标检测竞赛中取得第一名！
 ## 已经支持的模型:
 <li>YOLOV6l_yaml</li>
 <li>YOLOV6m_yaml</li>
 <li>YOLOV6s_yaml</li>
-<li>YOLOV6t_yaml</li><br>
+<li>YOLOV6t_yaml</li>
+<li>YOLOV6n_yaml</li><br>
 大尺寸模型，四个输出层：
 <li>YOLOV6l6_p2_yaml</li>
 <li>YOLOV6l6_yaml</li><br>
 增加DAMO YOLO 中的 neck：GiraffeNeckV2<br>
-已在 yolov6l,yolov6t 中替换
+已在 yolov6l, yolov6t 中替换
 
+## Benchmark
+| Model                                                        | Size | mAP<sup>val<br/>0.5:0.95              | Speed<sup>T4<br/>trt fp16 b1 <br/>(fps) | Speed<sup>T4<br/>trt fp16 b32 <br/>(fps) | Params<br/><sup> (M) | FLOPs<br/><sup> (G) |
+| :----------------------------------------------------------- | ---- | :------------------------------------ | --------------------------------------- | ---------------------------------------- | -------------------- | ------------------- |
+| [**YOLOv6-N**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6n_yaml_new.pt) | 640  | 35.9<sup>300e</sup><br/>36.3<sup>400e | 802                                     | 1234                                     | 4.3                  | 11.1                |
+| [**YOLOv6-T**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6t_yaml_new.pt) | 640  | 40.3<sup>300e</sup><br/>41.1<sup>400e | 449                                     | 659                                      | 15.0                 | 36.7                |
+| [**YOLOv6-S**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6s_yaml_new.pt) | 640  | 43.5<sup>300e</sup><br/>43.8<sup>400e | 358                                     | 495                                      | 17.2                 | 44.2                |
+| [**YOLOv6-M**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6m_yaml_new.pt) | 640  | 49.5                                  | 179                                     | 233                                      | 34.3                 | 82.2                |
+| [**YOLOv6-L-ReLU**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml_new.pt) | 640  | 51.7                                  | 113                                     | 149                                      | 58.5                 | 144.0               |
+| [**YOLOv6-L**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml_new.pt) | 640  | 52.5                                  | 98                                      | 121                                      | 58.5                 | 144.0               |
+- Speed is tested with TensorRT 7.2 on T4.
+- Data from YOLOv6 official
+- 目前 yolov6l，yolov6s，yolov6t，yolov6n 模型大小与精度已经和官方对齐
 ## 数据集配置
 ```
 data/images/train 中放入你的训练集图片
@@ -84,13 +99,14 @@ effidehead:
 
 ## 预训练权重（官方权重转化而来）
 基本模型<br>
-  [YOLOv6l_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml_new.pt)<br>
-  [YOLOv6m_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6m_yaml_new.pt)<br>
-  [YOLOv6s_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6s_yaml_new.pt)<br>
-  [YOLOv6t_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6t_yaml_new.pt)<br>
+  [YOLOv6-L.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml_new.pt)<br>
+  [YOLOv6-M.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6m_yaml_new.pt)<br>
+  [YOLOv6-S.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6s_yaml_new.pt)<br>
+  [YOLOv6-T.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6t_yaml_new.pt)<br>
+  [YOLOv6-N.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6n_yaml_new.pt)<br>
 大尺寸模型<br>
-  [YOLOv6l6_p2_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l6_p2_yaml_new.pt)<br>
-  [YOLOv6l6_yaml.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l6_yaml_new.pt)<br>
+  [YOLOv6-L6-p2.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l6_p2_yaml_new.pt)<br>
+  [YOLOv6-L6.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l6_yaml_new.pt)<br>
 ## 训练命令
 YOLOv6t
 ```shell
@@ -109,11 +125,11 @@ YOLOv6l
 python tools/train.py --conf-file configs/model_yaml/yolov6l_yaml.py --data data/data.yaml --device 0 --img 640
 ```
 ### 如何增加自己的模块
-与yolov5的方式类似<br><br>
+与 yolov5 的方式类似<br><br>
 step1: 先在``` yolov6/layers/common.py ``` 中加入模块的代码<br>
 step2: 在``` yolov6/models/yolo.py ``` 的 parse_model 函数中加入对应模块的条件判断语句<br>
 step3: 在``` configs/yaml/ ```目录下新建你的 yaml 文件，并将模块加入<br>
-step4: 在``` configs/model_yaml/ ``` 目录下新建一个py文件，并将``` yaml_file ```目录改为 yaml 文件的路径<br>
+step4: 在``` configs/model_yaml/ ``` 目录下新建一个 py 文件，并将``` yaml_file ```目录改为 yaml 文件的路径<br>
 step5: 运行训练命令<br>
 ### Acknowledgements
 * [https://github.com/meituan/YOLOv6](https://github.com/meituan/YOLOv6)
