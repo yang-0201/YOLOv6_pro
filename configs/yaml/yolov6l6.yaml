@@ -44,10 +44,10 @@ neck:
    [-1, 1, BepC3, [768, 12, "ConvWrapper"]]]  # 32 (P5/32-large)
 
 effidehead:
-  [[23, 1, Head_layers, [128]],
-  [26, 1, Head_layers, [256]],
-  [29, 1, Head_layers, [512]],
-  [32, 1, Head_layers, [768]],
+  [[23, 1, Head_layers, [128, 16]],
+  [26, 1, Head_layers, [256, 16]],
+  [29, 1, Head_layers, [512, 16]],
+  [32, 1, Head_layers, [768, 16]],
   [[33, 34, 35, 36],1 ,Out ,[]]]
 
 

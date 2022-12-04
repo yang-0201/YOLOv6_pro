@@ -94,7 +94,7 @@ def fuse_model(model):
     return model
 
 
-def get_model_info(model, img_size=640):
+def get_model_info(model, img_size=640,cfg = None):
     """Get model Params and GFlops.
     Code base on https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/utils/model_utils.py
     """
@@ -107,5 +107,5 @@ def get_model_info(model, img_size=640):
     flops /= 1e9
     img_size = img_size if isinstance(img_size, list) else [img_size, img_size]
     flops *= img_size[0] * img_size[1] / stride / stride * 2  # Gflops
-    info = "Params: {:.2f}M, Gflops: {:.2f}".format(params, flops)
+    info = "Params: {:.2f}M, Gflops: {:.2f} for {}x{}".format(params, flops,img_size[0],img_size[1])
     return info

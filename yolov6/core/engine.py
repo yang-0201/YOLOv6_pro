@@ -346,7 +346,8 @@ class Trainer:
         return images, targets
 
     def get_model(self, args, cfg, nc, device):
-        model = build_model(cfg, nc, device)
+        img_size = args.img_size
+        model = build_model(cfg, nc, device,img_size)
         build_type = cfg.model.build_type
         weights = cfg.model.pretrained
         if weights:  # finetune if pretrained model is set

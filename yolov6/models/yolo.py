@@ -11,10 +11,9 @@ from yolov6.models.reppan import *
 from yolov6.models.effidehead import Detect, build_effidehead_layer
 from utils.general import LOGGER
 from utils.torch_utils import model_info
-def parse_model(d, ch = 3):  # model_dict, input_channels(3)
+def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
     LOGGER.info(f"\n{'':>3}{'from':>18}{'n':>3}{'params':>10}  {'module':<40}{'arguments':<30}")
     gd, gw = d['depth_multiple'], d['width_multiple']
-
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
     for i, (f, n, m, args) in enumerate(d['backbone']+d['neck']+d['effidehead']):  # from, number, module, args
         m = eval(m) if isinstance(m, str) else m  # eval strings
@@ -42,7 +41,7 @@ def parse_model(d, ch = 3):  # model_dict, input_channels(3)
         elif m in [Head_layers,Head_out]:
             c1, c2 = ch[f], args[0]
             c2 = make_divisible(c2 * gw, 8)
-            args = [c2, *args[1:]]
+            args = [c2, args[1],nc]
         elif m in [Stem,ConvWrapper,Transpose]:
             c1 = ch[f]
             c2 = args[0]
@@ -89,7 +88,7 @@ class Model(nn.Module):
             with open(cfg, encoding='ascii', errors='ignore') as f:
                 self.yaml = yaml.safe_load(f)  # model dict
             ch = self.yaml['ch'] = self.yaml.get('ch', 3)
-            self.backbone, self.save = parse_model(deepcopy(self.yaml),ch=[ch])  # model, savelist
+            self.backbone, self.save = parse_model(deepcopy(self.yaml),ch=[ch],nc = num_classes)  # model, savelist
             # self.detect = build_network_yaml(config, channels, num_classes, anchors, num_layers)
             use_dfl = config.model.head.use_dfl
             stride = config.model.head.strides
@@ -215,11 +214,13 @@ def build_network_yaml(config, channels, num_classes, anchors, num_layers):
     head = Detect(num_classes, anchors, num_layers, head_layers=head_layers, use_dfl=use_dfl)
 
     return head
-def build_model(cfg, num_classes, device):
+def build_model(cfg, num_classes, device,img_size):
     model = Model(cfg, channels=3, num_classes=num_classes, anchors=cfg.model.head.anchors).to(device)
     from yolov6.utils.events import LOGGER
     from yolov6.utils.torch_utils import get_model_info
     LOGGER.info("Model Summary: {}".format(get_model_info(model, img_size = img_size,cfg = cfg)))
+    LOGGER.info("The number of parameters and floating point operations counted before training "+
+                "may not be accurate and need to be verified using eval.py in the validation phase to get the correct information")
     return model
 
 from yolov6.utils.general import dist2bbox
