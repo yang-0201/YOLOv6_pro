@@ -28,6 +28,7 @@
 | [**YOLOv6-L**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml_new.pt) | 640  | 52.5                                  | 98                                      | 121                                      | 58.5                 | 144.0               |
 - Speed is tested with TensorRT 7.2 on T4.
 - Data from YOLOv6 official
+- 目前 yolov6l，yolov6s，yolov6t，yolov6n 模型大小与精度已经和官方对齐
 ## 数据集配置
 ```
 data/images/train 中放入你的训练集图片
