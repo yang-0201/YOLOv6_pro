@@ -125,11 +125,11 @@ YOLOv6l
 python tools/train.py --conf-file configs/model_yaml/yolov6l_yaml.py --data data/data.yaml --device 0 --img 640
 ```
 ### 如何增加自己的模块
-与yolov5的方式类似<br><br>
+与 yolov5 的方式类似<br><br>
 step1: 先在``` yolov6/layers/common.py ``` 中加入模块的代码<br>
 step2: 在``` yolov6/models/yolo.py ``` 的 parse_model 函数中加入对应模块的条件判断语句<br>
 step3: 在``` configs/yaml/ ```目录下新建你的 yaml 文件，并将模块加入<br>
-step4: 在``` configs/model_yaml/ ``` 目录下新建一个py文件，并将``` yaml_file ```目录改为 yaml 文件的路径<br>
+step4: 在``` configs/model_yaml/ ``` 目录下新建一个 py 文件，并将``` yaml_file ```目录改为 yaml 文件的路径<br>
 step5: 运行训练命令<br>
 ### Acknowledgements
 * [https://github.com/meituan/YOLOv6](https://github.com/meituan/YOLOv6)
