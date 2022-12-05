@@ -21,7 +21,12 @@
 <li>YOLOV6l6_yaml</li>
 <li>YOLOV6n6_yaml</li><br>
 增加DAMO YOLO 中的 neck：GiraffeNeckV2<br>
-已在 yolov6l, yolov6t 中替换
+已在 yolov6l, yolov6t 中替换<br><br>
+
+<details>
+<summary>版本更新说明</summary>
+<br>[ 2022/12/4 ] v1.0.0 版本，对齐完善了几个基础模型的大小和精度，增加 wandb 记录模型训练曲线
+</details>
 
 ## Benchmark
 | Model                                                        | Size | mAP<sup>val<br/>0.5:0.95              | Speed<sup>T4<br/>trt fp16 b1 <br/>(fps) | Speed<sup>T4<br/>trt fp16 b32 <br/>(fps) | Params<br/><sup> (M) | FLOPs<br/><sup> (G) |
@@ -75,7 +80,7 @@ backbone:
    [-1, 1, ConvWrapper, [512, 3, 2]],  # 5-P4/16
    [-1, 1, BepC3, [512, 18, "ConvWrapper"]],
    [-1, 1, ConvWrapper, [1024, 3, 2]],  # 7-P5/32
-   [-1, 1, BepC3, [1024,6, "ConvWrapper"]],
+   [-1, 1, BepC3, [1024, 6, "ConvWrapper"]],
    [-1, 1, SPPF, [1024, 5]]]  # 9
 neck:
    [[-1, 1, SimConv, [256, 1, 1]],
@@ -96,9 +101,9 @@ neck:
    [[-1, 10], 1, Concat, [1]], 
    [-1, 1, BepC3, [512, 12, "ConvWrapper"]]]  # 23 (P5/32-large)
 effidehead:
-  [[17, 1, Head_layers, [128]], 如果为m，l模型 并且使用dfl损失，该项设置为[通道数，16，你的类别数]
-  [20, 1, Head_layers, [256]], 如果为s，t模型 并且不使用dfl损失，该项需要设置为[通道数，0，你的类别数]
-  [23, 1, Head_layers, [512]],
+  [[17, 1, Head_layers, [128， 16]], 如果为m，l模型 并且使用dfl损失，该项设置为[通道数，16，你的类别数]
+  [20, 1, Head_layers, [256， 16]], 如果为s，t模型 并且不使用dfl损失，该项需要设置为[通道数，0，你的类别数]
+  [23, 1, Head_layers, [512， 16]],
   [[24, 25, 26], 1, Out, []]]
 
 ```
