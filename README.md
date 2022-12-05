@@ -20,7 +20,7 @@
 <li>YOLOV6l6_p2_yaml</li>
 <li>YOLOV6l6_yaml</li>
 <li>YOLOV6n6_yaml</li><br>
-增加DAMO YOLO 中的 neck：GiraffeNeckV2<br>
+增加 DAMO YOLO 中的 neck：GiraffeNeckV2<br>
 已在 yolov6l, yolov6t 中替换<br><br>
 
 <details>
