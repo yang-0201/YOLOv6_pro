@@ -37,17 +37,17 @@ neck:
 
    [-1, 1, SimConv, [256, 3, 2]],
    [[-1, 16], 1, Concat, [1]],  # cat head P5
-   [-1, 1, BepC3, [512, 12, "ConvWrapper"]],  # 29 (P5/32-large)
+   [-1, 1, BepC3, [384, 12, "ConvWrapper"]],  # 29 (P5/32-large)
 
    [-1, 1, SimConv, [384, 3, 2]],
    [[-1, 12], 1, Concat, [1]],  # cat head P5
-   [-1, 1, BepC3, [768, 12, "ConvWrapper"]]]  # 32 (P5/32-large)
+   [-1, 1, BepC3, [512, 12, "ConvWrapper"]]]  # 32 (P5/32-large)
 
 effidehead:
   [[23, 1, Head_layers, [128, 16]],
   [26, 1, Head_layers, [256, 16]],
-  [29, 1, Head_layers, [512, 16]],
-  [32, 1, Head_layers, [768, 16]],
+  [29, 1, Head_layers, [384, 16]],
+  [32, 1, Head_layers, [512, 16]],
   [[33, 34, 35, 36], 1 ,Out , []]]
 
 

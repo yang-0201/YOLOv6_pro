@@ -39,18 +39,18 @@ neck:
 
    [-1, 1, SimConv, [256, 3, 2]],
    [[-1, 16], 1, Concat, [1]],  # cat head P5
-   [-1, 12, RepBlock, [512]], #29 (P5/32-large)
+   [-1, 12, RepBlock, [384]], #29 (P5/32-large)
 
    [-1, 1, SimConv, [384, 3, 2]],
    [[-1, 12], 1, Concat, [1]],  # cat head P6
-   [-1, 12, RepBlock, [768]] # 32 (P6/64-xlarge)
+   [-1, 12, RepBlock, [512]] # 32 (P6/64-xlarge)
   ]
 
 effidehead:
   [[23, 1, Head_layers, [128, 0]],
   [26, 1, Head_layers, [256, 0]],
-  [29, 1, Head_layers, [512, 0]],
-  [32, 1, Head_layers, [768, 0]],
+  [29, 1, Head_layers, [384, 0]],
+  [32, 1, Head_layers, [512, 0]],
   [[33, 34, 35, 36], 1 ,Out , []]]
 
 
