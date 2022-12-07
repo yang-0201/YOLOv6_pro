@@ -4,8 +4,9 @@
 可以在 `yaml` 文件中任意修改或添加模块，并且每个修改的文件都是独立可运行的，目的是为了助力科研 <br><br>
 后续会基于 `yolov5` 和 `yoloair` 中的模块加入更多的网络结构改进 <br><br>
 预训练权重已经从官方权重转换，确保可以匹配 <br><br>
-我们使用的 `yoloair` 和 `YOLOv6 pro` 框架在 IEEE UV 2022 "Vision Meets Alage" 目标检测竞赛中取得第一名！
-
+我们使用的 `yoloair` 和 `YOLOv6 pro` 框架在 IEEE UV 2022 "Vision Meets Alage" 目标检测竞赛中取得第一名！<br><br>
+博客介绍地址：<br>
+[**YOLOv6 Pro | 使 YOLOv6 构建网络和更换模块更为便捷，助力科研中的网络结构改进，包括Backbone,Neck,DecoupleHead（参考YOLOv5搭建网络的方式）**](https://blog.csdn.net/qq_43000647/article/details/128212340?spm=1001.2014.3001.5502)
 <p align="center">
   <img src="https://user-images.githubusercontent.com/89863442/205481197-8ad8a8e0-1f78-4ac4-a29c-efc8a39ccd10.png" align="middle" width = "1000" />
 </p>
