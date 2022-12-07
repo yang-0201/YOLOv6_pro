@@ -47,11 +47,18 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
             c1 = ch[f]
             c2 = args[0]
             args = [c1, c2, *args[1:]]
-        elif m in [ConvBNAct,GiraffeNeckV2]:
+        elif m in [ConvBNAct]:
             c1 = ch[f]
             c2 = args[0]
-            c2 = make_divisible(c2 * gw, 8)
-            args = [c1,c2,*args[1:]]
+            # c2 = make_divisible(c2 * gw, 8)
+            args = [c1, c2 ,*args[1:]]
+        elif m in [Focus,TinyNAS_CSP_2]:
+            c1 = args[0]
+            c2 = args[1]
+        elif m in [SuperResStem, TinyNAS_CSP, GiraffeNeckV2]:
+            c1 = ch[f]
+            c2 = args[0]
+            args = [c1, c2, *args[1:]]
         else:
             c2 = ch[f]
 
@@ -78,7 +85,7 @@ class Model(nn.Module):
         num_layers = config.model.head.num_layers
         build_type = config.model.build_type
         self.build_type = build_type
-        print(build_type)
+        # print(build_type)
         if build_type=="yaml":
 
         #self.mode = config.training_mode
@@ -109,7 +116,7 @@ class Model(nn.Module):
         initialize_weights(self)
         self.info()
 
-    def forward(self, x):
+    def forward(self, x, val_loss = False):
         export_mode = torch.onnx.is_in_onnx_export()
         if self.build_type == "yaml":
         ##############
@@ -119,11 +126,11 @@ class Model(nn.Module):
 
                 if m.f != -1:  # if not from previous layer
                     x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
-                try:
-                    number_layer = number_layer+1
-                    x = m(x)  # run
-                except:
-                    print("run error ,error layer: "+str(number_layer-1))
+                # try:
+                number_layer = number_layer+1
+                x = m(x)  # run
+                # except:
+                #     print("run error ,error layer: "+str(number_layer-1))
 
                 y.append(x if m.i in self.save else None)  # save output
         ############
@@ -133,7 +140,7 @@ class Model(nn.Module):
         if export_mode == False:
             featmaps = []
             featmaps.extend(x)
-        x = self.detect(x)
+        x = self.detect(x, val_loss)
         return x if export_mode is True else [x, featmaps]
 
     def _apply(self, fn):
@@ -255,8 +262,8 @@ class Detect_yaml(nn.Module):
         self.proj_conv.weight = nn.Parameter(self.proj.view([1, self.reg_max + 1, 1, 1]).clone().detach(),
                                                    requires_grad=False)
 
-    def forward(self, x):
-        if self.training:
+    def forward(self, x, val_loss = False):
+        if self.training or val_loss:
             cls_score_list = []
             reg_distri_list = []
 
@@ -322,7 +329,8 @@ def get_model_info(model, img_size=640, cfg = None):
     Code base on https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/utils/model_utils.py
     """
     from thop import profile
-    stride = cfg.model.head.strides[-1]  #32/64
+    # stride = cfg.model.head.strides[-1]  #32/64
+    stride = max(int(model.stride.max()), 32) if hasattr(model, 'stride') else 32
     img = torch.zeros((1, 3, stride, stride), device=next(model.parameters()).device)
 
     flops, params = profile(deepcopy(model), inputs=(img,), verbose=False)

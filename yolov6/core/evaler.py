@@ -99,7 +99,7 @@ class Evaler:
                                            data_dict=self.data, task=task)[0]
         return dataloader
 
-    def predict_model(self, model, dataloader, task):
+    def predict_model(self, model, dataloader, task, compute_loss = None,train_epoch = None):
         '''Model prediction
         Predicts the whole dataset and gets the prediced results and inference time.
         '''
@@ -116,7 +116,11 @@ class Evaler:
             if self.plot_confusion_matrix:
                 from yolov6.utils.metrics import ConfusionMatrix
                 confusion_matrix = ConfusionMatrix(nc=model.nc)
-
+        # for self.step, self.batch_data in enumerate(pbar):
+        #     images, targets = self.prepro_data(self.batch_data, self.device)
+        #     preds, s_featmaps = model(images,val_loss = True)
+        #     total_loss, loss_items = compute_loss(preds, targets, train_epoch, 15)
+        #     print(total_loss,loss_items)
         for i, (imgs, targets, paths, shapes) in enumerate(pbar):
 
             # pre-process
@@ -130,7 +134,12 @@ class Evaler:
             t2 = time_sync()
             outputs, _ = model(imgs)
             self.speed_result[2] += time_sync() - t2  # inference time
-
+            # outputs, _ = model(imgs, val_loss=False)
+            # targets = targets.to(self.device)
+            # # outputs1 = outputs.to(self.device, non_blocking=True).float() / 255
+            # total_loss, loss_items = compute_loss(outputs, targets, train_epoch, 15)
+            # print(total_loss,loss_items)
+            # outputs, _ = model(imgs, val_loss=False)
             # post-process
             t3 = time_sync()
             outputs = non_max_suppression(outputs, self.conf_thres, self.iou_thres, multi_label=True)
@@ -337,7 +346,6 @@ class Evaler:
         y[:, 2] = x[:, 2] - x[:, 0]  # width
         y[:, 3] = x[:, 3] - x[:, 1]  # height
         return y
-
     def scale_coords(self, img1_shape, coords, img0_shape, ratio_pad=None):
         '''Rescale coords (xyxy) from img1_shape to img0_shape.'''
         if ratio_pad is None:  # calculate from img0_shape

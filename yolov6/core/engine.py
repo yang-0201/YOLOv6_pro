@@ -210,6 +210,8 @@ class Trainer:
                             dataloader=self.val_loader,
                             save_dir=self.save_dir,
                             do_pr_metric=self.do_pr_metric,
+                            compute_loss = self.compute_loss,
+                            train_epoch = self.epoch,
                             task='train')
         else:
             def get_cfg_value(cfg_dict, value_str, default_value):

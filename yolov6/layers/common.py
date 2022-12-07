@@ -9,7 +9,8 @@ import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
 import torch.nn.init as init
-from yolov6.layers.damo_yolo import ConvBNAct,GiraffeNeckV2
+from yolov6.layers.damo_yolo import ConvBNAct,GiraffeNeckV2,Focus,SuperResStem
+from yolov6.layers.tiny_nas_csp import TinyNAS_CSP, TinyNAS_CSP_2
 
 class SiLU(nn.Module):
     '''Activation of SiLU'''

@@ -1,17 +1,16 @@
 # YOLOv6l model
 model = dict(
     type='YOLOv6l_yaml',
-    # pretrained='yolov6l_yaml.pt',
-    pretrained="weights/yolov6l_yaml_new.pt",
+    pretrained=None,
     build_type = 'yaml',
-    yaml_file = 'configs/yaml/yolov6l_GiraffeNeckV2.yaml',
+    yaml_file = 'configs/yaml/yolov6l6.yaml',
     depth_multiple=1.0,
     width_multiple=1.0,
     head=dict(
         type='EffiDeHead',
-        num_layers=3,
+        num_layers=4,
         anchors=1,
-        strides=[8, 16, 32],
+        strides=[8, 16, 32, 64],
         iou_type='giou',
         use_dfl=True,
         reg_max=16, #if use_dfl is False, please set reg_max to 0
@@ -22,30 +21,30 @@ model = dict(
     )
 )
 
-solver = dict(
+solver=dict(
     optim='SGD',
     lr_scheduler='Cosine',
-    lr0=0.0032,
-    lrf=0.12,
-    momentum=0.843,
-    weight_decay=0.00036,
-    warmup_epochs=2.0,
-    warmup_momentum=0.5,
-    warmup_bias_lr=0.05
+    lr0=0.01,
+    lrf=0.01,
+    momentum=0.937,
+    weight_decay=0.0005,
+    warmup_epochs=3.0,
+    warmup_momentum=0.8,
+    warmup_bias_lr=0.1
 )
 
 data_aug = dict(
-    hsv_h=0.0138,
-    hsv_s=0.664,
-    hsv_v=0.464,
-    degrees=0.373,
-    translate=0.245,
-    scale=0.898,
-    shear=0.602,
-    flipud=0.00856,
+    hsv_h=0.015,
+    hsv_s=0.7,
+    hsv_v=0.4,
+    degrees=0.0,
+    translate=0.1,
+    scale=0.9,
+    shear=0.0,
+    flipud=0.0,
     fliplr=0.5,
     mosaic=1.0,
-    mixup=0.243,
+    mixup=0.1,
 )
 training_mode = "conv_silu"
 # use normal conv to speed up training and further improve accuracy.

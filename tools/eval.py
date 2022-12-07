@@ -116,6 +116,8 @@ def run(data,
         plot_curve=False,
         plot_confusion_matrix=False,
         config_file=None,
+        compute_loss = None,
+        train_epoch = None,
         ):
     """ Run the evaluation process
 
@@ -150,7 +152,7 @@ def run(data,
 
     # eval
     model.eval()
-    pred_result, vis_outputs, vis_paths = val.predict_model(model, dataloader, task)
+    pred_result, vis_outputs, vis_paths = val.predict_model(model, dataloader, task, compute_loss,train_epoch)
     eval_result = val.eval_model(pred_result, model, dataloader, task)
     return eval_result, vis_outputs, vis_paths
 
