@@ -41,7 +41,21 @@
 - Speed is tested with TensorRT 7.2 on T4.
 - Data from YOLOv6 official
 - 目前 yolov6l，yolov6s，yolov6t，yolov6n 模型大小与精度已经和官方对齐
-## 数据集配置
+
+### YOLOv6 Pro 基准实验
+数据集: VOC2007，VOC2012 </br>
+训练集: train_2007, tran_2012, val_2007, test_2007 (16551 images) </br>
+验证集: test_2007 (4952 images) </br>
+GPU: 4090 24GB
+ 
+ Model  | img size  | MAP0.5 | MAP0.5:0.95
+ ---- | ----- | ------  | ------ 
+ YOLOv6L  | 640 | 0.928 | 0.761 
+ --  | -- | -- | --  
+ 
+
+## 训练你的数据集
+### 数据集配置
 ```
 data/images/train 中放入你的训练集图片
 data/images/val 中放入你的验证集图片
