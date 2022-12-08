@@ -6,7 +6,7 @@ backbone:
   [[-1, 1, RepVGGBlock, [64, 3, 2]],  # 0-P1/2 channel: 24
    [-1, 1, RepVGGBlock, [128, 3, 2]],  # 1-P2/4  channel: 48
 
-    # RepGhostBottleneck [3, 3, 1, 16, 8, 0.5, 0]
+    # RepGhostBottleneck [48, 3, 1, 192, 480, 0.5, 0]
     # in_channel, k, s, c, exp_size, width, se_ratio
     # out_channel = _make_divisible(c * width, 4)
     # mid_channel = _make_divisible(exp_size * width, 4)

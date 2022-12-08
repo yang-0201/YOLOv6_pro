@@ -194,9 +194,9 @@ class Trainer:
                 wandb.log({"train/all_loss": self.total_loss, "train/iou_loss": self.loss_items[0], "train/dfl_loss": self.loss_items[1],
                            "train/cls_loss": self.loss_items[2],"metrics/mAP_0.5": self.evaluate_results[0], "metrics/mAP_0.5:0.95": self.evaluate_results[1]})
             # log for tensorboard
-            write_tblog(self.tblogger, self.epoch, self.evaluate_results, self.mean_loss)
+            # write_tblog(self.tblogger, self.epoch, self.evaluate_results, self.mean_loss)
             # save validation predictions to tensorboard
-            write_tbimg(self.tblogger, self.vis_imgs_list, self.epoch, type='val')
+            # write_tbimg(self.tblogger, self.vis_imgs_list, self.epoch, type='val')
 
     def eval_model(self):
         if not hasattr(self.cfg, "eval_params"):

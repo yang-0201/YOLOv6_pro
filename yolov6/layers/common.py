@@ -1299,51 +1299,9 @@ def repghostnet(enable_se=True, **kwargs):
 
     return RepGhostNet(cfgs, **kwargs)
 
-def repghostnet_0_5x(**kwargs):
-    return repghostnet(width=0.5, **kwargs)
+
 ############### end of repghost
-def repghostnet_0_5x(**kwargs):
-    return repghostnet(width=0.5, **kwargs)
 
-
-def repghostnet_repid_0_5x(**kwargs):
-    return repghostnet(width=0.5, reparam_bn=False, reparam_identity=True, **kwargs)
-
-
-def repghostnet_norep_0_5x(**kwargs):
-    return repghostnet(width=0.5, reparam=False, **kwargs)
-
-
-def repghostnet_wo_0_5x(**kwargs):
-    return repghostnet(width=0.5, shortcut=False, **kwargs)
-
-
-def repghostnet_0_58x(**kwargs):
-    return repghostnet(width=0.58, **kwargs)
-
-
-def repghostnet_0_8x(**kwargs):
-    return repghostnet(width=0.8, **kwargs)
-
-
-def repghostnet_1_0x(**kwargs):
-    return repghostnet(width=1.0, **kwargs)
-
-
-def repghostnet_1_11x(**kwargs):
-    return repghostnet(width=1.11, **kwargs)
-
-
-def repghostnet_1_3x(**kwargs):
-    return repghostnet(width=1.3, **kwargs)
-
-
-def repghostnet_1_5x(**kwargs):
-    return repghostnet(width=1.5, **kwargs)
-
-
-def repghostnet_2_0x(**kwargs):
-    return repghostnet(width=2.0, **kwargs)
 def get_block(mode):
     if mode == 'repvgg':
         return RepVGGBlock
