@@ -1,0 +1,54 @@
+depth_multiple: 0.33  # model depth multiple
+width_multiple: 0.375  # layer channel multiple
+
+backbone:
+  # [from, number, module, args]
+  [[-1, 1, RepVGGBlock, [64, 3, 2]],  # 0-P1/2 channel: 24
+   [-1, 1, RepVGGBlock, [128, 3, 2]],  # 1-P2/4  channel: 48
+
+    # RepGhostBottleneck [3, 3, 1, 16, 8, 0.5, 0]
+    # in_channel, k, s, c, exp_size, width, se_ratio
+    # out_channel = _make_divisible(c * width, 4)
+    # mid_channel = _make_divisible(exp_size * width, 4)
+    # _make_divisible: It ensures that all layers have a channel number that is divisible by 4 ?
+    # exp: c = 24, exp_size = 36, width = 0.5
+    # out_channel = _make_divisible(12,4) = 4, mid_channel = _make_divisible(36 * 0.5, 4) = 20
+    # arg[0]: in channel, arg[3],arg[5]:out channel, arg[4],arg[5]:mid_channel (mid_channel is define by yourself)
+   [-1, 1, RepGhostBottleneck, [48, 3, 1, 192, 480, 0.5, 0]],
+
+   [-1, 1, RepVGGBlock, [256, 3, 2]],  # 3-P3/8  channel: 96
+   [-1, 12, RepBlock, [256]],
+   [-1, 1, RepVGGBlock, [512, 3, 2]],  # 5-P4/16
+   [-1, 18, RepBlock, [512]],
+   [-1, 1, RepVGGBlock, [1024, 3, 2]],  # 7-P5/32
+   [-1, 6, RepBlock, [1024]],
+   [-1, 1, SimSPPF, [1024, 5]]]  # 9
+
+neck:
+  [[-1, 1, SimConv, [256, 1, 1]],
+   [-1, 1, Transpose, [256]],
+   [[-1, 6], 1, Concat, [1]],
+   [-1, 12, RepBlock, [256]],
+
+   [-1, 1, SimConv, [128, 1, 1]],
+   [-1, 1, Transpose, [128]],
+   [[-1, 4], 1, Concat, [1]],
+   [-1, 12, RepBlock, [128]],   #out
+
+   [-1, 1, SimConv, [128, 3, 2]],
+   [[-1, 14], 1, Concat, [1]],  # cat head P4
+   [-1, 12, RepBlock, [256]],  # 20 (P4/16-medium)
+
+   [-1, 1, SimConv, [256, 3, 2]],
+   [[-1, 10], 1, Concat, [1]],  # cat head P5
+   [-1, 12, RepBlock, [512]]]  # 23 (P5/32-large)
+
+effidehead:
+  [[17, 1, Head_layers, [128, 0]],#if use_dfl is False, please set reg_max to 0
+  [20, 1, Head_layers, [256, 0]],
+  [23, 1, Head_layers, [512, 0]],
+  [[24, 25, 26],1,Out, []]]
+
+
+
+

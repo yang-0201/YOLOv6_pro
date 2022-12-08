@@ -9,6 +9,8 @@ import torch
 import torch.nn as nn
 from torch.nn.parameter import Parameter
 import torch.nn.init as init
+import torch.nn.functional as F
+
 from yolov6.layers.damo_yolo import ConvBNAct,GiraffeNeckV2,Focus,SuperResStem
 from yolov6.layers.tiny_nas_csp import TinyNAS_CSP, TinyNAS_CSP_2
 
@@ -638,94 +640,7 @@ class Head_out(nn.Module):
         reg_output = self.reg_pred(reg_x)
 
         return x, cls_output, reg_output
-# import torch
-# import torch.nn as nn
-# from mmcv.cnn import  DepthwiseSeparableConvModule
-# from mmcv.runner import BaseModule
-#
-#
-# class CSPNeXtBlock(nn.Module):
-#
-#     def __init__(self,
-#                  in_channels, out_channels, expansion=0.5, add_identity=True,
-#                  use_depthwise=False, conv_cfg=None,norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),act_cfg=dict(type='Swish')):
-#         super(CSPNeXtBlock, self).__init__()
-#         hidden_channels = int(out_channels * expansion)
-#         conv_depth = DepthwiseSeparableConvModule
-#
-#         self.conv1 = Conv_C3(
-#             in_channels,
-#             hidden_channels,
-#             k = 3,
-#             s=1,
-#             p=1,)
-#         self.conv2 = conv_depth(
-#                         hidden_channels,
-#                         out_channels,
-#                         5,
-#                         stride=1,
-#                         padding=5 // 2,
-#                         conv_cfg=conv_cfg,
-#                         norm_cfg=norm_cfg,
-#                         act_cfg=act_cfg)
-#         self.add_identity = \
-#             add_identity and in_channels == out_channels
-#
-#     def forward(self, x):
-#         identity = x
-#         out = self.conv1(x)
-#         out = self.conv2(out)
-#
-#         if self.add_identity:
-#             return out + identity
-#         else:
-#             return out
-#
-#
-# class CSPNeXtLayer(nn.Module):
-#
-#     def __init__(self,
-#                  in_channels,
-#                  out_channels,
-#                  num_blocks=1,
-#                  add_identity=True,
-#                  use_depthwise=False,
-#                  conv_cfg=None,
-#                  expand_ratio=0.5,
-#                  init_cfg=None):
-#         super(CSPNeXtLayer, self).__init__()
-#         mid_channels = int(out_channels * expand_ratio)
-#         self.main_conv = Conv_C3(
-#             in_channels,
-#             mid_channels,
-#             1,)
-#         self.short_conv = Conv_C3(
-#             in_channels,
-#             mid_channels,
-#             1,)
-#         self.final_conv = Conv_C3(
-#             2 * mid_channels,
-#             out_channels,
-#             1,)
-#
-#         self.blocks = nn.Sequential(*[
-#             CSPNeXtBlock(
-#                 mid_channels,
-#                 mid_channels,
-#                 1.0,
-#                 add_identity,
-#                 use_depthwise,) for _ in range(num_blocks)
-#         ])
-#
-#     def forward(self, x):
-#         x_short = self.short_conv(x)
-#
-#         x_main = self.main_conv(x)
-#         x_main = self.blocks(x_main)
-#
-#         x_final = torch.cat((x_main, x_short), dim=1)
-#         return self.final_conv(x_final)
-#
+
 # BoT
 class MHSA(nn.Module):
     def __init__(self, n_dims, width=14, height=14, heads=4, pos_emb=False):
@@ -835,115 +750,600 @@ class ConvFFN(nn.Module):
         out = self.nonlinear(out)
         out = self.pw2(out)
         return x + self.drop_path(out)
+'''RepVGGBlock is a basic rep-style block, including training and deploy status
+This code is based on https://github.com/DingXiaoH/RepVGG/blob/main/repvgg.py
+'''
+class RepGhostVGGBlock(nn.Module):
+    '''RepVGGBlock is a basic rep-style block, including training and deploy status
+    This code is based on https://github.com/DingXiaoH/RepVGG/blob/main/repvgg.py
+    '''
+    def __init__(self, in_channels, out_channels, kernel_size=3,
+                 stride=1, padding=1, dilation=1, groups=1, padding_mode='zeros', deploy=False, use_se=False):
+        super(RepGhostVGGBlock, self).__init__()
+        """ Initialization of the class.
+        Args:
+            in_channels (int): Number of channels in the input image
+            out_channels (int): Number of channels produced by the convolution
+            kernel_size (int or tuple): Size of the convolving kernel
+            stride (int or tuple, optional): Stride of the convolution. Default: 1
+            padding (int or tuple, optional): Zero-padding added to both sides of
+                the input. Default: 1
+            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
+            groups (int, optional): Number of blocked connections from input
+                channels to output channels. Default: 1
+            padding_mode (string, optional): Default: 'zeros'
+            deploy: Whether to be deploy status or training status. Default: False
+            use_se: Whether to use se. Default: False
+        """
+        self.deploy = deploy
+        self.groups = groups
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+
+        assert kernel_size == 3
+        assert padding == 1
+
+        padding_11 = padding - kernel_size // 2
+
+        self.nonlinearity = nn.ReLU()
+
+        if use_se:
+            raise NotImplementedError("se block not supported yet")
+        else:
+            self.se = nn.Identity()
+
+        if deploy:
+            self.rbr_reparam = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride,
+                                         padding=padding, dilation=dilation, groups=groups, bias=True, padding_mode=padding_mode)
+
+        else:
+            self.rbr_identity = nn.BatchNorm2d(num_features=in_channels) if out_channels == in_channels and stride == 1 else None
+            self.rbr_dense = conv_bn(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding, groups=groups)
+            self.rbr_1x1 = conv_bn(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=stride, padding=padding_11, groups=groups)
+
+    def forward(self, inputs):
+        '''Forward process'''
+        if hasattr(self, 'rbr_reparam'):
+            return self.nonlinearity(self.se(self.rbr_reparam(inputs)))
+
+        if self.rbr_identity is None:
+            id_out = 0
+        else:
+            id_out = self.rbr_identity(inputs)
+
+        return self.nonlinearity(self.se(self.rbr_dense(inputs) + self.rbr_1x1(inputs) + id_out))
+
+    def get_equivalent_kernel_bias(self):
+        kernel3x3, bias3x3 = self._fuse_bn_tensor(self.rbr_dense)
+        kernel1x1, bias1x1 = self._fuse_bn_tensor(self.rbr_1x1)
+        kernelid, biasid = self._fuse_bn_tensor(self.rbr_identity)
+        return kernel3x3 + self._pad_1x1_to_3x3_tensor(kernel1x1) + kernelid, bias3x3 + bias1x1 + biasid
+
+    def _pad_1x1_to_3x3_tensor(self, kernel1x1):
+        if kernel1x1 is None:
+            return 0
+        else:
+            return torch.nn.functional.pad(kernel1x1, [1, 1, 1, 1])
+
+    def _fuse_bn_tensor(self, branch):
+        if branch is None:
+            return 0, 0
+        if isinstance(branch, nn.Sequential):
+            kernel = branch.conv.weight
+            running_mean = branch.bn.running_mean
+            running_var = branch.bn.running_var
+            gamma = branch.bn.weight
+            beta = branch.bn.bias
+            eps = branch.bn.eps
+        else:
+            assert isinstance(branch, nn.BatchNorm2d)
+            if not hasattr(self, 'id_tensor'):
+                input_dim = self.in_channels // self.groups
+                kernel_value = np.zeros((self.in_channels, input_dim, 3, 3), dtype=np.float32)
+                for i in range(self.in_channels):
+                    kernel_value[i, i % input_dim, 1, 1] = 1
+                self.id_tensor = torch.from_numpy(kernel_value).to(branch.weight.device)
+            kernel = self.id_tensor
+            running_mean = branch.running_mean
+            running_var = branch.running_var
+            gamma = branch.weight
+            beta = branch.bias
+            eps = branch.eps
+        std = (running_var + eps).sqrt()
+        t = (gamma / std).reshape(-1, 1, 1, 1)
+        return kernel * t, beta - running_mean * gamma / std
+
+    def switch_to_deploy(self):
+        if hasattr(self, 'rbr_reparam'):
+            return
+        kernel, bias = self.get_equivalent_kernel_bias()
+        self.rbr_reparam = nn.Conv2d(in_channels=self.rbr_dense.conv.in_channels, out_channels=self.rbr_dense.conv.out_channels,
+                                     kernel_size=self.rbr_dense.conv.kernel_size, stride=self.rbr_dense.conv.stride,
+                                     padding=self.rbr_dense.conv.padding, dilation=self.rbr_dense.conv.dilation, groups=self.rbr_dense.conv.groups, bias=True)
+        self.rbr_reparam.weight.data = kernel
+        self.rbr_reparam.bias.data = bias
+        for para in self.parameters():
+            para.detach_()
+        self.__delattr__('rbr_dense')
+        self.__delattr__('rbr_1x1')
+        if hasattr(self, 'rbr_identity'):
+            self.__delattr__('rbr_identity')
+        if hasattr(self, 'id_tensor'):
+            self.__delattr__('id_tensor')
+        self.deploy = True
 
 
-# from mmcv.cnn import ConvModule, DepthwiseSeparableConvModule
-# from mmcv.runner import BaseModule
-#
-#
-# class CSPNeXtBlock(BaseModule):
-#
-#     def __init__(self,
-#                  in_channels, out_channels, expansion=0.5, add_identity=True,
-#                  use_depthwise=True, conv_cfg=None, norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
-#                  act_cfg=dict(type='Swish'),
-#                  init_cfg=None):
-#         super().__init__(init_cfg)
+#############RepGhost
+# RepGhost: A Hardware-Efficient Ghost Module via Re-parameterization
+# https://github.com/ChengpengChen/RepGhost/blob/main/model/repghost.py
+class RepGhostModule(nn.Module):
+    def __init__(
+        self, inp, oup, kernel_size=1, dw_size=3, stride=1, relu=True, deploy=False, reparam_bn=True, reparam_identity=False
+    ):
+        super(RepGhostModule, self).__init__()
+        init_channels = oup
+        new_channels = oup
+        self.deploy = deploy
 
-#         hidden_channels = int(out_channels * expansion)
-#         conv_depth = DepthwiseSeparableConvModule if use_depthwise else ConvModule
-#
-#         self.conv1 = ConvModule(
-#             in_channels,
-#             hidden_channels,
-#             3,
-#             stride=1,
-#             padding=1,
-#             conv_cfg=conv_cfg,
-#             norm_cfg=norm_cfg,
-#             act_cfg=act_cfg)
-#         self.conv2 = conv_depth(
-#             hidden_channels,
-#             out_channels,
-#             5,
-#             stride=1,
-#             padding=5 // 2,
-#             conv_cfg=conv_cfg,
-#             norm_cfg=norm_cfg,
-#             act_cfg=act_cfg)
-#         self.add_identity = \
-#             add_identity and in_channels == out_channels
-#
-#     def forward(self, x):
-#         identity = x
-#         out = self.conv1(x)
-#         out = self.conv2(out)
-#
-#         if self.add_identity:
-#             return out + identity
-#         else:
-#             return out
-#
-#
-# class CSPNeXtLayer(BaseModule):
-#
-#     def __init__(self,
-#                  in_channels,
-#                  out_channels,
-#                  num_blocks=1,
-#                  add_identity=True,
-#                  use_depthwise=False,
-#                  conv_cfg=None,
-#                  expand_ratio=0.5,
-#                  norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
-#                  act_cfg=dict(type='Swish'),
-#                  init_cfg=None):
-#         super().__init__(init_cfg)
-#         mid_channels = int(out_channels * expand_ratio)
-#         self.main_conv = ConvModule(
-#             in_channels,
-#             mid_channels,
-#             1,
-#             conv_cfg=conv_cfg,
-#             norm_cfg=norm_cfg,
-#             act_cfg=act_cfg)
-#         self.short_conv = ConvModule(
-#             in_channels,
-#             mid_channels,
-#             1,
-#             conv_cfg=conv_cfg,
-#             norm_cfg=norm_cfg,
-#             act_cfg=act_cfg)
-#         self.final_conv = ConvModule(
-#             2 * mid_channels,
-#             out_channels,
-#             1,
-#             conv_cfg=conv_cfg,
-#             norm_cfg=norm_cfg,
-#             act_cfg=act_cfg)
-#
-#         self.blocks = nn.Sequential(*[
-#             CSPNeXtBlock(
-#                 mid_channels,
-#                 mid_channels,
-#                 1.0,
-#                 add_identity,
-#                 use_depthwise,
-#                 conv_cfg=conv_cfg,
-#                 norm_cfg=norm_cfg,
-#                 act_cfg=act_cfg) for _ in range(num_blocks)
-#         ])
-#
-#     def forward(self, x):
-#         x_short = self.short_conv(x)
-#
-#         x_main = self.main_conv(x)
-#         x_main = self.blocks(x_main)
-#
-#         x_final = torch.cat((x_main, x_short), dim=1)
-#         return self.final_conv(x_final)
+        self.primary_conv = nn.Sequential(
+            nn.Conv2d(
+                inp, init_channels, kernel_size, stride, kernel_size // 2, bias=False,
+            ),
+            nn.BatchNorm2d(init_channels),
+            nn.ReLU(inplace=True) if relu else nn.Sequential(),
+        )
+        fusion_conv = []
+        fusion_bn = []
+        if not deploy and reparam_bn:
+            fusion_conv.append(nn.Identity())
+            fusion_bn.append(nn.BatchNorm2d(init_channels))
+        if not deploy and reparam_identity:
+            fusion_conv.append(nn.Identity())
+            fusion_bn.append(nn.Identity())
+
+        self.fusion_conv = nn.Sequential(*fusion_conv)
+        self.fusion_bn = nn.Sequential(*fusion_bn)
+
+        self.cheap_operation = nn.Sequential(
+            nn.Conv2d(
+                init_channels,
+                new_channels,
+                dw_size,
+                1,
+                dw_size // 2,
+                groups=init_channels,
+                bias=deploy,
+            ),
+            nn.BatchNorm2d(new_channels) if not deploy else nn.Sequential(),
+            # nn.ReLU(inplace=True) if relu else nn.Sequential(),
+        )
+        if deploy:
+            self.cheap_operation = self.cheap_operation[0]
+        if relu:
+            self.relu = nn.ReLU(inplace=False)
+        else:
+            self.relu = nn.Sequential()
+
+    def forward(self, x):
+        x1 = self.primary_conv(x)
+        x2 = self.cheap_operation(x1)
+        for conv, bn in zip(self.fusion_conv, self.fusion_bn):
+            x2 = x2 + bn(conv(x1))
+        return self.relu(x2)
+
+    def get_equivalent_kernel_bias(self):
+        kernel3x3, bias3x3 = self._fuse_bn_tensor(self.cheap_operation[0], self.cheap_operation[1])
+        for conv, bn in zip(self.fusion_conv, self.fusion_bn):
+            kernel, bias = self._fuse_bn_tensor(conv, bn, kernel3x3.shape[0], kernel3x3.device)
+            kernel3x3 += self._pad_1x1_to_3x3_tensor(kernel)
+            bias3x3 += bias
+        return kernel3x3, bias3x3
+
+    @staticmethod
+    def _pad_1x1_to_3x3_tensor(kernel1x1):
+        if kernel1x1 is None:
+            return 0
+        else:
+            return torch.nn.functional.pad(kernel1x1, [1, 1, 1, 1])
+
+    @staticmethod
+    def _fuse_bn_tensor(conv, bn, in_channels=None, device=None):
+        in_channels = in_channels if in_channels else bn.running_mean.shape[0]
+        device = device if device else bn.weight.device
+        if isinstance(conv, nn.Conv2d):
+            kernel = conv.weight
+            assert conv.bias is None
+        else:
+            assert isinstance(conv, nn.Identity)
+            kernel_value = np.zeros((in_channels, 1, 1, 1), dtype=np.float32)
+            for i in range(in_channels):
+                kernel_value[i, 0, 0, 0] = 1
+            kernel = torch.from_numpy(kernel_value).to(device)
+
+        if isinstance(bn, nn.BatchNorm2d):
+            running_mean = bn.running_mean
+            running_var = bn.running_var
+            gamma = bn.weight
+            beta = bn.bias
+            eps = bn.eps
+            std = (running_var + eps).sqrt()
+            t = (gamma / std).reshape(-1, 1, 1, 1)
+            return kernel * t, beta - running_mean * gamma / std
+        assert isinstance(bn, nn.Identity)
+        return kernel, torch.zeros(in_channels).to(kernel.device)
+
+    def switch_to_deploy(self):
+        if len(self.fusion_conv) == 0 and len(self.fusion_bn) == 0:
+            return
+        kernel, bias = self.get_equivalent_kernel_bias()
+        self.cheap_operation = nn.Conv2d(in_channels=self.cheap_operation[0].in_channels,
+                                         out_channels=self.cheap_operation[0].out_channels,
+                                         kernel_size=self.cheap_operation[0].kernel_size,
+                                         padding=self.cheap_operation[0].padding,
+                                         dilation=self.cheap_operation[0].dilation,
+                                         groups=self.cheap_operation[0].groups,
+                                         bias=True)
+        self.cheap_operation.weight.data = kernel
+        self.cheap_operation.bias.data = bias
+        self.__delattr__('fusion_conv')
+        self.__delattr__('fusion_bn')
+        self.fusion_conv = []
+        self.fusion_bn = []
+        self.deploy = True
+class RepGhostBottleneck(nn.Module):
+    """RepGhost bottleneck w/ optional SE"""
+
+    def __init__(
+        self,
+        in_chs,
+        dw_kernel_size=3,
+        stride=1,
+        c = 16,
+        exp_size = 8,
+        width = 0.5,
+        se_ratio=0.0,
+        shortcut=True,
+        reparam=True,
+        reparam_bn=True,
+        reparam_identity=False,
+        deploy=False,
+    ):
+        out_chs = _make_divisible(c * width, 4)
+        mid_chs = _make_divisible(exp_size * width, 4)
+        super(RepGhostBottleneck, self).__init__()
+        has_se = se_ratio is not None and se_ratio > 0.0
+        self.stride = stride
+        self.enable_shortcut = shortcut
+        self.in_chs = in_chs
+        self.out_chs = out_chs
+
+        # Point-wise expansion
+        self.ghost1 = RepGhostModule(
+            in_chs,
+            mid_chs,
+            relu=True,
+            reparam_bn=reparam and reparam_bn,
+            reparam_identity=reparam and reparam_identity,
+            deploy=deploy,
+        )
+
+        # Depth-wise convolution
+        if self.stride > 1:
+            self.conv_dw = nn.Conv2d(
+                mid_chs,
+                mid_chs,
+                dw_kernel_size,
+                stride=stride,
+                padding=(dw_kernel_size - 1) // 2,
+                groups=mid_chs,
+                bias=False,
+            )
+            self.bn_dw = nn.BatchNorm2d(mid_chs)
+
+        # Squeeze-and-excitation
+        if has_se:
+            self.se = SqueezeExcite(mid_chs, se_ratio=se_ratio)
+        else:
+            self.se = None
+
+        # Point-wise linear projection
+        self.ghost2 = RepGhostModule(
+            mid_chs,
+            out_chs,
+            relu=False,
+            reparam_bn=reparam and reparam_bn,
+            reparam_identity=reparam and reparam_identity,
+            deploy=deploy,
+        )
+
+        # shortcut
+        if in_chs == out_chs and self.stride == 1:
+            self.shortcut = nn.Sequential()
+        else:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(
+                    in_chs,
+                    in_chs,
+                    dw_kernel_size,
+                    stride=stride,
+                    padding=(dw_kernel_size - 1) // 2,
+                    groups=in_chs,
+                    bias=False,
+                ),
+                nn.BatchNorm2d(in_chs),
+                nn.Conv2d(
+                    in_chs, out_chs, 1, stride=1,
+                    padding=0, bias=False,
+                ),
+                nn.BatchNorm2d(out_chs),
+            )
+
+    def forward(self, x):
+        residual = x
+
+        # 1st repghost bottleneck
+        x1 = self.ghost1(x)
+
+        # Depth-wise convolution
+        if self.stride > 1:
+            x = self.conv_dw(x1)
+            x = self.bn_dw(x)
+        else:
+            x = x1
+
+        # Squeeze-and-excitation
+        if self.se is not None:
+            x = self.se(x)
+
+        # 2nd repghost bottleneck
+        x = self.ghost2(x)
+        if not self.enable_shortcut and self.in_chs == self.out_chs and self.stride == 1:
+            return x
+        return x + self.shortcut(residual)
+
+def hard_sigmoid(x, inplace: bool = False):
+    if inplace:
+        return x.add_(3.0).clamp_(0.0, 6.0).div_(6.0)
+    else:
+        return F.relu6(x + 3.0) / 6.0
+def _make_divisible(v, divisor, min_value=None):
+    """
+    This function is taken from the original tf repo.
+    It ensures that all layers have a channel number that is divisible by 8
+    It can be seen here:
+    https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet/mobilenet.py
+    """
+    if min_value is None:
+        min_value = divisor
+    new_v = max(min_value, int(v + divisor / 2) // divisor * divisor)
+    # Make sure that round down does not go down by more than 10%.
+    if new_v < 0.9 * v:
+        new_v += divisor
+    return new_v
+import copy
+def repghost_model_convert(model:torch.nn.Module, save_path=None, do_copy=True):
+    """
+    taken from from https://github.com/DingXiaoH/RepVGG/blob/main/repvgg.py
+    """
+    if do_copy:
+        model = copy.deepcopy(model)
+    for module in model.modules():
+        if hasattr(module, 'switch_to_deploy'):
+            module.switch_to_deploy()
+    if save_path is not None:
+        torch.save(model.state_dict(), save_path)
+    return model
+class SqueezeExcite(nn.Module):
+    def __init__(
+        self,
+        in_chs,
+        se_ratio=0.25,
+        reduced_base_chs=None,
+        act_layer=nn.ReLU,
+        gate_fn=hard_sigmoid,
+        divisor=4,
+        **_,
+    ):
+        super(SqueezeExcite, self).__init__()
+        self.gate_fn = gate_fn
+        reduced_chs = _make_divisible(
+            (reduced_base_chs or in_chs) * se_ratio, divisor,
+        )
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.conv_reduce = nn.Conv2d(in_chs, reduced_chs, 1, bias=True)
+        self.act1 = act_layer(inplace=True)
+        self.conv_expand = nn.Conv2d(reduced_chs, in_chs, 1, bias=True)
+
+    def forward(self, x):
+        x_se = self.avg_pool(x)
+        x_se = self.conv_reduce(x_se)
+        x_se = self.act1(x_se)
+        x_se = self.conv_expand(x_se)
+        x = x * self.gate_fn(x_se)
+        return x
+class ConvBnAct(nn.Module):
+    def __init__(self, in_chs, out_chs, kernel_size, stride=1, act_layer=nn.ReLU):
+        super(ConvBnAct, self).__init__()
+        self.conv = nn.Conv2d(
+            in_chs, out_chs, kernel_size, stride, kernel_size // 2, bias=False,
+        )
+        self.bn1 = nn.BatchNorm2d(out_chs)
+        self.act1 = act_layer(inplace=True)
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.bn1(x)
+        x = self.act1(x)
+        return x
+class RepGhostNet(nn.Module):
+    def __init__(
+        self,
+        cfgs,
+        num_classes=1000,
+        width=1.0,
+        dropout=0.2,
+        shortcut=True,
+        reparam=True,
+        reparam_bn=True,
+        reparam_identity=False,
+        deploy=False,
+    ):
+        super(RepGhostNet, self).__init__()
+        # setting of inverted residual blocks
+        self.cfgs = cfgs
+        self.dropout = dropout
+        self.num_classes = num_classes
+
+        # building first layer
+        output_channel = _make_divisible(16 * width, 4)
+        self.conv_stem = nn.Conv2d(3, output_channel, 3, 2, 1, bias=False)
+        self.bn1 = nn.BatchNorm2d(output_channel)
+        self.act1 = nn.ReLU(inplace=True)
+        input_channel = output_channel
+
+        # building inverted residual blocks
+        stages = []
+        block = RepGhostBottleneck
+        for cfg in self.cfgs:
+            layers = []
+            for k, exp_size, c, se_ratio, s in cfg:
+                output_channel = _make_divisible(c * width, 4)
+                hidden_channel = _make_divisible(exp_size * width, 4)
+                layers.append(
+                    block(
+                        input_channel,
+                        hidden_channel,
+                        output_channel,
+                        k,
+                        s,
+                        se_ratio=se_ratio,
+                        shortcut=shortcut,
+                        reparam=reparam,
+                        reparam_bn=reparam_bn,
+                        reparam_identity=reparam_identity,
+                        deploy=deploy
+                    ),
+                )
+                input_channel = output_channel
+            stages.append(nn.Sequential(*layers))
+
+        output_channel = _make_divisible(exp_size * width * 2, 4)
+        stages.append(
+            nn.Sequential(
+                ConvBnAct(input_channel, output_channel, 1),
+            ),
+        )
+        input_channel = output_channel
+
+        self.blocks = nn.Sequential(*stages)
+
+        # building last several layers
+        output_channel = 1280
+        self.global_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.conv_head = nn.Conv2d(
+            input_channel, output_channel, 1, 1, 0, bias=True,
+        )
+        self.act2 = nn.ReLU(inplace=True)
+        self.classifier = nn.Linear(output_channel, num_classes)
+
+    def forward(self, x):
+        x = self.conv_stem(x)
+        x = self.bn1(x)
+        x = self.act1(x)
+        x = self.blocks(x)
+        x = self.global_pool(x)
+        x = self.conv_head(x)
+        x = self.act2(x)
+        x = x.view(x.size(0), -1)
+        if self.dropout > 0.0:
+            x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.classifier(x)
+        return x
+
+    def convert_to_deploy(self):
+        repghost_model_convert(self, do_copy=False)
+
+#build backbone
+def repghostnet(enable_se=True, **kwargs):
+    """
+    Constructs a RepGhostNet model
+    """
+    cfgs = [
+        # k, t, c, SE, s
+        # stage1
+        [[3, 8, 16, 0, 1]],
+        # stage2
+        [[3, 24, 24, 0, 2]],
+        [[3, 36, 24, 0, 1]],
+        # stage3
+        [[5, 36, 40, 0.25 if enable_se else 0, 2]],
+        [[5, 60, 40, 0.25 if enable_se else 0, 1]],
+        # stage4
+        [[3, 120, 80, 0, 2]],
+        [
+            [3, 100, 80, 0, 1],
+            [3, 120, 80, 0, 1],
+            [3, 120, 80, 0, 1],
+            [3, 240, 112, 0.25 if enable_se else 0, 1],
+            [3, 336, 112, 0.25 if enable_se else 0, 1],
+        ],
+        # stage5
+        [[5, 336, 160, 0.25 if enable_se else 0, 2]],
+        [
+            [5, 480, 160, 0, 1],
+            [5, 480, 160, 0.25 if enable_se else 0, 1],
+            [5, 480, 160, 0, 1],
+            [5, 480, 160, 0.25 if enable_se else 0, 1],
+        ],
+    ]
+
+    return RepGhostNet(cfgs, **kwargs)
+
+def repghostnet_0_5x(**kwargs):
+    return repghostnet(width=0.5, **kwargs)
+############### end of repghost
+def repghostnet_0_5x(**kwargs):
+    return repghostnet(width=0.5, **kwargs)
 
 
+def repghostnet_repid_0_5x(**kwargs):
+    return repghostnet(width=0.5, reparam_bn=False, reparam_identity=True, **kwargs)
+
+
+def repghostnet_norep_0_5x(**kwargs):
+    return repghostnet(width=0.5, reparam=False, **kwargs)
+
+
+def repghostnet_wo_0_5x(**kwargs):
+    return repghostnet(width=0.5, shortcut=False, **kwargs)
+
+
+def repghostnet_0_58x(**kwargs):
+    return repghostnet(width=0.58, **kwargs)
+
+
+def repghostnet_0_8x(**kwargs):
+    return repghostnet(width=0.8, **kwargs)
+
+
+def repghostnet_1_0x(**kwargs):
+    return repghostnet(width=1.0, **kwargs)
+
+
+def repghostnet_1_11x(**kwargs):
+    return repghostnet(width=1.11, **kwargs)
+
+
+def repghostnet_1_3x(**kwargs):
+    return repghostnet(width=1.3, **kwargs)
+
+
+def repghostnet_1_5x(**kwargs):
+    return repghostnet(width=1.5, **kwargs)
+
+
+def repghostnet_2_0x(**kwargs):
+    return repghostnet(width=2.0, **kwargs)
 def get_block(mode):
     if mode == 'repvgg':
         return RepVGGBlock
