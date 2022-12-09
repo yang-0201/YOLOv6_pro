@@ -16,17 +16,18 @@
 <li>YOLOV6m_yaml</li>
 <li>YOLOV6s_yaml</li>
 <li>YOLOV6t_yaml</li>
-<li>YOLOV6n_yaml</li><br>
+<li>YOLOV6n_yaml</li>
 大尺寸模型，四个输出层：
-<li>YOLOV6l6_p2_yaml</li>
+<li>YOLOV6l_p2_yaml</li>
 <li>YOLOV6l6_yaml</li>
-<li>YOLOV6n6_yaml</li><br>
-增加 DAMO YOLO 中的 neck：GiraffeNeckV2 M,S,T<br>
-已在 yolov6l, yolov6t 中示例替换<br><br>
-增加 RepGhost <br>
+<li>YOLOV6n6_yaml</li>
+<li>增加 DAMO YOLO 中的 neck：GiraffeNeckV2 M,S,T</li>
+<li>增加 RepGhost 模块和 RepGhostNet1.0× backbone</li>
+
 <details>
 <summary>版本更新说明</summary>
 <li> [ 2022/12/4 ] v1.0.0 版本，对齐完善了几个基础模型的大小和精度，增加 wandb 记录模型训练曲线 </li>
+<li> [ 2022/12/8 ]增加 GiraffeNeckV2，RepGhost，增加 VOC 数据集上的 YOLOv6 Pro 基准实验结果</li>
 </details>
 
 ## Benchmark
