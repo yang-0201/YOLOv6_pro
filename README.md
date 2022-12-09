@@ -23,7 +23,7 @@
 <li>YOLOV6n6_yaml</li><br>
 增加 DAMO YOLO 中的 neck：GiraffeNeckV2 M,S,T<br>
 已在 yolov6l, yolov6t 中示例替换<br><br>
-
+增加 RepGhost <br>
 <details>
 <summary>版本更新说明</summary>
 <li> [ 2022/12/4 ] v1.0.0 版本，对齐完善了几个基础模型的大小和精度，增加 wandb 记录模型训练曲线 </li>
