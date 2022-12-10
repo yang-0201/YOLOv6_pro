@@ -72,7 +72,7 @@ class Detect(nn.Module):
         self.proj_conv.weight = nn.Parameter(self.proj.view([1, self.reg_max + 1, 1, 1]).clone().detach(),
                                                    requires_grad=False)
 
-    def forward(self, x):
+    def forward(self, x,val_loss= None):
         if self.training:
             cls_score_list = []
             reg_distri_list = []

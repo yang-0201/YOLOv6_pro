@@ -1,0 +1,41 @@
+depth_multiple: 1.0  # model depth multiple
+width_multiple: 1.0  # layer channel multiple
+backbone:
+  # [from, number, module, args]
+  [[-1, 1, ConvWrapper, [64, 3, 2]],  # 0-P1/2
+   [-1, 1, ConvWrapper, [128, 3, 2]],  # 1-P2/4
+   [-1, 1, BepC3, [128, 6, "ConvWrapper"]],
+   [-1, 1, ConvWrapper, [256, 3, 2]],  # 3-P3/8
+   [-1, 1, BepC3, [256, 12, "ConvWrapper"]],
+   [-1, 1, ConvWrapper, [512, 3, 2]],  # 5-P4/16
+   [-1, 1, BepC3, [512, 18, "ConvWrapper"]],
+   [-1, 1, ConvWrapper, [1024, 3, 2]],  # 7-P5/32
+   [-1, 1, BepC3, [1024, 6, "ConvWrapper"]],
+   [-1, 1, SPPF, [1024, 5]]]  # 9
+neck:
+   [[-1, 1, SimConv, [256, 1, 1]],
+   [-1, 1, Transpose, [256]],
+   [[-1, 6], 1, Concat, [1]],  #768
+   [-1, 1, BepC3, [256, 12, "ConvWrapper"]],
+
+   [-1, 1, SimConv, [128, 1, 1]],
+   [-1, 1, Transpose, [128]],
+   [[-1, 4], 1, Concat, [1]],  #384
+   [-1, 1, BepC3, [128, 12, "ConvWrapper"]],   #out
+
+   [-1, 1, SimConv, [128, 3, 2]],
+   [[-1, 14], 1, Concat, [1]],  # cat head P4
+   [-1, 1, BepC3, [256, 12, "ConvWrapper"]],   #out
+
+   [-1, 1, SimConv, [256, 3, 2]],
+   [[-1, 10], 1, Concat, [1]],  # cat head P5
+   [-1, 1, BepC3, [512, 12, "ConvWrapper"]],   #out
+   [-1, 1, FocalTransformer, [512]]]
+
+effidehead:
+  [[17, 1, Head_layers, [128, 16]],
+  [20, 1, Head_layers, [256, 16]],
+  [24, 1, Head_layers, [512, 16]],
+  [[25, 26, 27], 1, Out, []]]
+
+

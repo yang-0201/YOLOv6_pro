@@ -352,6 +352,11 @@ class Trainer:
                                            hyp=dict(cfg.data_aug), rect=True, rank=-1, pad=0.5,
                                            workers=args.workers, check_images=args.check_images,
                                            check_labels=args.check_labels, data_dict=data_dict, task='val')[0]
+            # val_loader = create_dataloader(val_path, args.img_size, args.batch_size // args.world_size * 2, grid_size,
+            #                                hyp=dict(cfg.data_aug), rect=False, rank=-1, pad=0,
+            #                                workers=args.workers, check_images=args.check_images,
+            #                                check_labels=args.check_labels, data_dict=data_dict, task='val')[0]
+
 
         return train_loader, val_loader
 
@@ -364,7 +369,10 @@ class Trainer:
     def get_model(self, args, cfg, nc, device):
         img_size = args.img_size
         model = build_model(cfg, nc, device,img_size)
-        build_type = cfg.model.build_type
+        try:
+            build_type = cfg.model.build_type
+        except:
+            build_type = "office"
         weights = cfg.model.pretrained
         if weights:  # finetune if pretrained model is set
             LOGGER.info(f'Loading state_dict from {weights} for fine-tuning...')

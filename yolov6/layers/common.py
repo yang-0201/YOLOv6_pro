@@ -13,7 +13,7 @@ import torch.nn.functional as F
 
 from yolov6.layers.damo_yolo import ConvBNAct,GiraffeNeckV2,Focus,SuperResStem
 from yolov6.layers.tiny_nas_csp import TinyNAS_CSP, TinyNAS_CSP_2
-
+from yolov6.layers.focal_transformer import FocalTransformer_block
 class SiLU(nn.Module):
     '''Activation of SiLU'''
     @staticmethod
@@ -1301,7 +1301,18 @@ def repghostnet(enable_se=True, **kwargs):
 
 
 ############### end of repghost
+#######focal#####
+#focal_levels = [2, 2, 2, 2]  focal_windows=7, #[7, 5, 3, 1] depths [2,2,6,2]
+class FocalTransformer(nn.Module):
+    def __init__(self,in_chans, out_chans,depths=2,focal_windows=7,window_size=7):
+        super(FocalTransformer, self).__init__()
 
+        num_heads = out_chans // 32
+        self.focal_transformer = FocalTransformer_block(in_chans = in_chans, embed_dim = out_chans,depths = depths,
+                                                        num_heads = num_heads,focal_windows = focal_windows,window_size = window_size)
+    def forward(self,x):
+        x = self.focal_transformer(x)
+        return x
 def get_block(mode):
     if mode == 'repvgg':
         return RepVGGBlock

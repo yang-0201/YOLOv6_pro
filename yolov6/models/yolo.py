@@ -55,7 +55,7 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
         elif m in [Focus,TinyNAS_CSP_2]:
             c1 = args[0]
             c2 = args[1]
-        elif m in [SuperResStem, TinyNAS_CSP, GiraffeNeckV2, ConvBnAct]:
+        elif m in [SuperResStem, TinyNAS_CSP, GiraffeNeckV2, ConvBnAct,FocalTransformer]:
             c1 = ch[f]
             c2 = args[0]
             args = [c1, c2, *args[1:]]
@@ -85,8 +85,12 @@ class Model(nn.Module):
     def __init__(self, config, channels=3, num_classes=None, anchors=None):  # model, input channels, number of classes
         super().__init__()
         # Build network
-        num_layers = config.model.head.num_layers
-        build_type = config.model.build_type
+        try:
+            num_layers = config.model.head.num_layers
+            build_type = config.model.build_type
+        except:
+            print("build model by office YOLOv6")
+            build_type = "office"
         self.build_type = build_type
         # print(build_type)
         if build_type=="yaml":
@@ -106,7 +110,7 @@ class Model(nn.Module):
             self.stride = self.detect.stride
             self.detect.initialize_biases()
         else:
-            self.backbone, self.neck, self.detect = build_network(config, channels, num_classes, anchors, num_layers)
+            self.backbone, self.neck, self.detect = build_network(config, channels, num_classes, anchors, num_layers,val_loss= None)
             begin_indices = config.model.head.begin_indices
             out_indices_head = config.model.head.out_indices
             self.stride = self.detect.stride
@@ -160,7 +164,7 @@ def make_divisible(x, divisor):
     return math.ceil(x / divisor) * divisor
 
 
-def build_network(config, channels, num_classes, anchors, num_layers):
+def build_network(config, channels, num_classes, anchors, num_layers,val_loss = None):
     depth_mul = config.model.depth_multiple
     width_mul = config.model.width_multiple
     num_repeat_backbone = config.model.backbone.num_repeats
@@ -332,14 +336,18 @@ def get_model_info(model, img_size=640, cfg = None):
     Code base on https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/utils/model_utils.py
     """
     from thop import profile
-    # stride = cfg.model.head.strides[-1]  #32/64
-    stride = max(int(model.stride.max()), 32) if hasattr(model, 'stride') else 32
-    img = torch.zeros((1, 3, stride, stride), device=next(model.parameters()).device)
+    try:  # FLOPs
+        # stride = cfg.model.head.strides[-1]  #32/64
+        stride = max(int(model.stride.max()), 32) if hasattr(model, 'stride') else 32
+        img = torch.zeros((1, 3, stride, stride), device=next(model.parameters()).device)
 
-    flops, params = profile(deepcopy(model), inputs=(img,), verbose=False)
-    params /= 1e6
-    flops /= 1e9
-    img_size = img_size if isinstance(img_size, list) else [img_size, img_size]
-    flops *= img_size[0] * img_size[1] / stride / stride * 2  # Gflops
-    info = "Params: {:.2f}M, Gflops: {:.2f} for {}x{}".format(params, flops,img_size[0],img_size[1])
+        flops, params = profile(deepcopy(model), inputs=(img,), verbose=False)
+        params /= 1e6
+        flops /= 1e9
+        img_size = img_size if isinstance(img_size, list) else [img_size, img_size]
+        flops *= img_size[0] * img_size[1] / stride / stride * 2  # Gflops
+        info = "Params: {:.2f}M, Gflops: {:.2f} for {}x{}".format(params, flops,img_size[0],img_size[1])
+    except (ImportError, Exception):
+        info = ""
+        print("error in get_model_info")
     return info
