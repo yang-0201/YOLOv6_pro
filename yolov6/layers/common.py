@@ -1313,6 +1313,14 @@ class FocalTransformer(nn.Module):
     def forward(self,x):
         x = self.focal_transformer(x)
         return x
+class FocalC3(BepC3):
+    def __init__(self, in_channels, out_channels, depths=2, focal_windows=7,window_size=7,e=0.5):  # ch_in, ch_out, number, shortcut, groups, expansion
+        super().__init__(in_channels, out_channels)
+        c_ = int(out_channels * e)
+        num_heads = out_channels // 32
+        self.m = FocalTransformer_block(in_chans = c_, embed_dim = c_,depths = depths,
+                                                        num_heads = num_heads,focal_windows = focal_windows,window_size = window_size)
+
 def get_block(mode):
     if mode == 'repvgg':
         return RepVGGBlock
