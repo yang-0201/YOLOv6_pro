@@ -47,8 +47,8 @@
 数据集: VOC2007，VOC2012 </br>
 训练集: train_2007, tran_2012, val_2007, test_2007 (16551 images) </br>
 验证集: test_2007 (4952 images) </br>
-GPU: 4090 24GB
- 
+GPU: 4090 24GB</br>
+ 使用 COCO 预训练权重：
  Model  | img size  | MAP0.5 | MAP0.5:0.95 | 预训练模型| epochs
  ---- | ----- | ------  | ------ | ------ | ------
  YOLOv6L  | 640 | 0.928 | 0.761 | COCO | 50 
@@ -56,10 +56,19 @@ GPU: 4090 24GB
  YOLOv6S  | 640 | 0.902 | 0.705  | COCO | 50
  YOLOv6T  | 640 | 0.877 | 0.677  | COCO | 50
  YOLOv6N  | 640 | 0.844 | 0.633  | COCO | 50
+
+<details>
+<summary>无预训练权重</summary>
+
+ Model  | img size  | MAP0.5 | MAP0.5:0.95 | 预训练模型| epochs
+ ---- | ----- | ------  | ------ | ------ | ------
  YOLOv6N6  | 640 | 0.799 | 0.567  | not all | 100
  YOLOv6N  | 640 | 0.763 | 0.537  |  None | 100
  YOLOv6L6  | 640 | 0.911 | 0.741  | not all | 100
+ YOLOv6L  | 640 | 0.862 | 0.664  | None | 100
+ YOLOv6L6  | 640 | 0.866 | 0.674  | None | 100
  
+</details>
 
 ## 训练你的数据集
 ### 数据集配置
