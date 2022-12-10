@@ -29,13 +29,12 @@ neck:
 
    [-1, 1, SimConv, [256, 3, 2]],
    [[-1, 10], 1, Concat, [1]],  # cat head P5
-   [-1, 1, BepC3, [512, 12, "ConvWrapper"]],   #out
-   [-1, 1, FocalTransformer, [512]]]
+   [-1, 1, FocalC3, [512]]]
 
 effidehead:
   [[17, 1, Head_layers, [128, 16]],
   [20, 1, Head_layers, [256, 16]],
-  [24, 1, Head_layers, [512, 16]],
-  [[25, 26, 27], 1, Out, []]]
+  [23, 1, Head_layers, [512, 16]],
+  [[24, 25, 26], 1, Out, []]]
 
 
