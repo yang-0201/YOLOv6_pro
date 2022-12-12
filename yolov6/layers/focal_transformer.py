@@ -1278,7 +1278,7 @@ class FocalTransformer_block(nn.Module):
                  drop_rate=0.,
                  attn_drop_rate=0.,
 
-                 drop_path_rate=0.2,
+                 drop_path_rate=0., #0.2
                  norm_layer=nn.LayerNorm,
                  ape=False,
                  patch_norm=True,

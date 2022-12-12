@@ -52,10 +52,10 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
             c2 = args[0]
             # c2 = make_divisible(c2 * gw, 8)
             args = [c1, c2 ,*args[1:]]
-        elif m in [Focus,TinyNAS_CSP_2]:
+        elif m in [Focus, TinyNAS_CSP_2]:
             c1 = args[0]
             c2 = args[1]
-        elif m in [SuperResStem, TinyNAS_CSP, GiraffeNeckV2, ConvBnAct, FocalTransformer, FocalC3]:
+        elif m in [SuperResStem, TinyNAS_CSP, GiraffeNeckV2, ConvBnAct, FocalTransformer, FocalC3,CoAtNetMBConv,ConvGE,CoAtNetTrans, MBConv_block,CoAtTrans_block]:
             c1 = ch[f]
             c2 = args[0]
             args = [c1, c2, *args[1:]]

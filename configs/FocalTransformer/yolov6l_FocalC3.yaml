@@ -29,7 +29,7 @@ neck:
 
    [-1, 1, SimConv, [256, 3, 2]],
    [[-1, 10], 1, Concat, [1]],  # cat head P5
-   [-1, 1, FocalC3, [512]]]
+   [-1, 1, FocalC3, [512,2,5]]]
 
 effidehead:
   [[17, 1, Head_layers, [128, 16]],

@@ -348,14 +348,17 @@ class Trainer:
         # create val dataloader
         val_loader = None
         if args.rank in [-1, 0]:
+            if args.not_infer_on_rect:
+                pad = 0
+                rect = False
+            else:
+                pad = 0.5
+                rect = True
             val_loader = create_dataloader(val_path, args.img_size, args.batch_size // args.world_size * 2, grid_size,
-                                           hyp=dict(cfg.data_aug), rect=True, rank=-1, pad=0.5,
+                                           hyp=dict(cfg.data_aug), rect=rect, rank=-1, pad=pad,
                                            workers=args.workers, check_images=args.check_images,
                                            check_labels=args.check_labels, data_dict=data_dict, task='val')[0]
-            # val_loader = create_dataloader(val_path, args.img_size, args.batch_size // args.world_size * 2, grid_size,
-            #                                hyp=dict(cfg.data_aug), rect=False, rank=-1, pad=0,
-            #                                workers=args.workers, check_images=args.check_images,
-            #                                check_labels=args.check_labels, data_dict=data_dict, task='val')[0]
+
 
 
         return train_loader, val_loader
@@ -378,6 +381,9 @@ class Trainer:
             LOGGER.info(f'Loading state_dict from {weights} for fine-tuning...')
             if build_type =="yaml" and cfg.model.type != "YOLOv6l":
                 model = load_state_dict_yaml(weights, model, map_location=device)
+            elif args.weights or args.resume:
+                model = load_state_dict(weights, model, map_location=device)
+                LOGGER.info('Model: {}'.format(model))
             else:
                 model = load_state_dict(weights, model, map_location=device)
                 LOGGER.info('Model: {}'.format(model))

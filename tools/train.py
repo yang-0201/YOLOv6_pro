@@ -53,7 +53,9 @@ def get_args_parser(add_help=True):
     parser.add_argument('--temperature', type=int, default=20, help='distill temperature')
     parser.add_argument('--yaml', type=str, default=None, help='build model by yaml')
     parser.add_argument('--wandb', action='store_true', help='wandb')
-    parser.add_argument('--do_pr_metric', type=str, default=False, help='wandb')
+    parser.add_argument('--weights', action='store_true', help='use office model')
+    parser.add_argument('--not_infer_on_rect', action='store_true', help='do not use rect to and pad for eval after train epoch')
+    parser.add_argument('--do_pr_metric', action='store_true', help='do pr metric for eval after train epoch')
     return parser
 
 

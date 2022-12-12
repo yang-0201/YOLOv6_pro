@@ -13,6 +13,7 @@ import torch.nn.functional as F
 
 from yolov6.layers.damo_yolo import ConvBNAct,GiraffeNeckV2,Focus,SuperResStem
 from yolov6.layers.tiny_nas_csp import TinyNAS_CSP, TinyNAS_CSP_2
+from yolov6.layers.CoAtNet import CoAtNetMBConv,ConvGE,CoAtNetTrans, MBConv_block, CoAtTrans_block
 from yolov6.layers.focal_transformer import FocalTransformer_block
 class SiLU(nn.Module):
     '''Activation of SiLU'''
