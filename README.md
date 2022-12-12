@@ -153,6 +153,7 @@ effidehead:
   [YOLOv6-N6.pt](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6n6_yaml_new.pt)<br>
 tips：其中大尺寸模型无 coco 预训练权重，而是从小模型的对应层转化而来
 ## 训练命令
+### 使用预训练权重：
 YOLOv6t
 ```shell
 python tools/train.py --conf-file configs/model_yaml/yolov6t_yaml.py --data data/data.yaml --device 0 --img 640
@@ -168,6 +169,12 @@ python tools/train.py --conf-file configs/model_yaml/yolov6m_yaml.py --data data
 YOLOv6l
 ```shell
 python tools/train.py --conf-file configs/model_yaml/yolov6l_yaml.py --data data/data.yaml --device 0 --img 640
+```
+### 不使用预训练权重：
+  Tips: 如果不使用预训练权重，建议用更大的学习率，可以更快得到结果，否则会很难训练，两者配置文件的区别可以从 configs/model_yaml 和 configs/without_weights中看到</br></br>
+只需要将 --conf-file configs/without_weights/yolov6l_yaml.py 中的 model_yaml 改为 without_weights 即可，调用无预训练权重的配置文件，如训练 YOLOv6l 不使用预训练：
+```shell
+python tools/train.py --conf-file configs/without_weights/yolov6l_yaml.py --data data/data.yaml --device 0 --img 640
 ```
 ### 如何增加自己的模块
 与 yolov5 的方式类似<br><br>
