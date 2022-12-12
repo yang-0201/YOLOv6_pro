@@ -55,7 +55,8 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
         elif m in [Focus, TinyNAS_CSP_2]:
             c1 = args[0]
             c2 = args[1]
-        elif m in [SuperResStem, TinyNAS_CSP, GiraffeNeckV2, ConvBnAct, FocalTransformer, FocalC3,CoAtNetMBConv,ConvGE,CoAtNetTrans, MBConv_block,CoAtTrans_block]:
+        elif m in [SuperResStem, TinyNAS_CSP, RepGFPN, ConvBnAct, FocalTransformer, FocalC3, CoAtNetMBConv, ConvGE, CoAtNetTrans, MBConv_block, CoAtTrans_block,
+                   MBConvC3]:
             c1 = ch[f]
             c2 = args[0]
             args = [c1, c2, *args[1:]]

@@ -14,27 +14,27 @@ backbone:
    [-1, 1, SPPF, [1024, 5]]]  # 9
 neck:
    [
-    [ 6, 1,ConvBNAct,[ 256, 3, 2, silu ] ],
+    [ 6, 1,ConvBNAct,[ 256, 3, 2, ] ],
     [ [ -1, 9 ], 1, Concat, [ 1 ] ], # 768
-    [ -1, 1, GiraffeNeckV2, [ 512, 1.5, 1.0, silu ] ],  #  8
+    [ -1, 1, RepGFPN, [ 512, 1.0, 0.75 ] ],  #  8
 
     [ -1, 1, nn.Upsample, [ None, 2, 'nearest' ] ],
-    [ 4, 1,ConvBNAct,[ 128, 3, 2, silu ] ],
+    [ 4, 1,ConvBNAct,[ 128, 3, 2 ] ],
     [ [ -1, 6, 13 ], 1, Concat, [ 1 ] ], # 896
-    [ -1, 1, GiraffeNeckV2, [ 256, 1.5, 1.0, silu ] ], # merge_4 12
+    [ -1, 1, RepGFPN, [ 256, 1.0, 0.75 ] ], # merge_4 12
 
     [ -1, 1, nn.Upsample, [ None, 2, 'nearest' ] ],
     [ [ -1, 4 ], 1, Concat, [ 1 ] ], # 384
-    [ -1, 1, GiraffeNeckV2, [ 128, 1.5, 1.0, silu ] ], # 512+256  merge_5  15  out
+    [ -1, 1, RepGFPN, [ 128, 1.0, 0.75 ] ], # 512+256  merge_5  15  out
 
-    [ -1, 1,ConvBNAct,[ 128, 3, 2, silu ] ],
+    [ -1, 1,ConvBNAct,[ 128, 3, 2 ] ],
     [ [ -1, 16 ], 1, Concat, [ 1 ] ], # 384
-    [ -1, 1, GiraffeNeckV2, [ 256, 1.5, 1.0, silu ] ], # 512+256  merge_7  18  out
+    [ -1, 1, RepGFPN, [ 256, 1.0, 0.75 ] ], # 512+256  merge_7  18  out
 
-    [ 16, 1,ConvBNAct,[ 256, 3, 2, silu ] ],
-    [ -2, 1,ConvBNAct,[ 256, 3, 2, silu ] ],
+    [ 16, 1,ConvBNAct,[ 256, 3, 2 ] ],
+    [ -2, 1,ConvBNAct,[ 256, 3, 2 ] ],
     [ [ -1, 12, -2 ], 1, Concat, [ 1 ] ], # 1024
-    [ -1, 1, GiraffeNeckV2, [ 512, 1.5, 1.0, silu ] ], # 512+512+1024 merge_6 22  out
+    [ -1, 1, RepGFPN, [ 512, 1.0, 0.75 ] ], # 512+512+1024 merge_6 22  out
    ]
 
 effidehead:

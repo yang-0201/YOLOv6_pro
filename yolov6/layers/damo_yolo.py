@@ -261,9 +261,9 @@ class CSPStem(nn.Module):
 
 
 ###########neck
-class GiraffeNeckV2(nn.Module):
+class RepGFPN(nn.Module):
     def __init__(self,in_channels,out_channels,depth=1.0,hidden_ratio = 1.0,act = 'relu',block_name='BasicBlock_3x3_Reverse',spp = False):
-        super(GiraffeNeckV2, self).__init__()
+        super(RepGFPN, self).__init__()
 
 
         self.merge_3 = CSPStage(block_name,

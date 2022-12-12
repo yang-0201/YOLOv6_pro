@@ -11,7 +11,7 @@ from torch.nn.parameter import Parameter
 import torch.nn.init as init
 import torch.nn.functional as F
 
-from yolov6.layers.damo_yolo import ConvBNAct,GiraffeNeckV2,Focus,SuperResStem
+from yolov6.layers.damo_yolo import ConvBNAct,RepGFPN,Focus,SuperResStem
 from yolov6.layers.tiny_nas_csp import TinyNAS_CSP, TinyNAS_CSP_2
 from yolov6.layers.CoAtNet import CoAtNetMBConv,ConvGE,CoAtNetTrans, MBConv_block, CoAtTrans_block
 from yolov6.layers.focal_transformer import FocalTransformer_block
@@ -1321,6 +1321,11 @@ class FocalC3(BepC3):
         num_heads = out_channels // 32
         self.m = FocalTransformer_block(in_chans = c_, embed_dim = c_,depths = depths,
                                                         num_heads = num_heads,focal_windows = focal_windows,window_size = window_size)
+class MBConvC3(BepC3):
+    def __init__(self, in_channels, out_channels, num_blocks=2, e=0.5):  # ch_in, ch_out, number, shortcut, groups, expansion
+        super().__init__(in_channels, out_channels)
+        c_ = int(out_channels * e)
+        self.m = MBConv_block(in_channels = c_, out_channels = c_,num_blocks = num_blocks)
 
 def get_block(mode):
     if mode == 'repvgg':
