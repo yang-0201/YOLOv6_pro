@@ -12,19 +12,26 @@
 </p>
 
 ## 已经支持的模型:
-<li>YOLOV6l_yaml</li>
-<li>YOLOV6m_yaml</li>
-<li>YOLOV6s_yaml</li>
-<li>YOLOV6t_yaml</li>
-<li>YOLOV6n_yaml</li>
-大尺寸模型，四个输出层：
-<li>YOLOV6l_p2_yaml</li>
-<li>YOLOV6l6_yaml</li>
-<li>YOLOV6n6_yaml</li>
+<details>
+<summary>基础模型</summary>
+<li>YOLOV6l</li>
+<li>YOLOV6m</li>
+<li>YOLOV6s</li>
+<li>YOLOV6t</li>
+<li>YOLOV6n</li>
+</details>
+<details>
+<summary>大尺寸模型，四个输出层</summary>
+<li>YOLOV6l_p2</li>
+<li>YOLOV6l6</li>
+<li>YOLOV6n6</li>
+</details>
+
+YOLOv6 Pro 结构：
 <li>增加 DAMO YOLO 中的 neck：GiraffeNeckV2 M,S,T</li>
 <li>增加 RepGhost 模块和 RepGhostNet1.0× backbone</li>
 <li>增加 FocalTransformer, FocalTRC3模块</li>
-<li>增加 CoAtNet主干, MBConv, CoAtTran 模块</li></br>
+<li>增加 CoAtNet 主干, MBConv, CoAtTran 模块</li></br>
 
 <details>
 <summary>版本更新说明</summary>
