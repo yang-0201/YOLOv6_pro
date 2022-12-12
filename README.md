@@ -23,7 +23,8 @@
 <li>YOLOV6n6_yaml</li>
 <li>增加 DAMO YOLO 中的 neck：GiraffeNeckV2 M,S,T</li>
 <li>增加 RepGhost 模块和 RepGhostNet1.0× backbone</li>
-<li>增加 FocalTransformer 模块</li></br>
+<li>增加 FocalTransformer, FocalTRC3模块</li>
+<li>增加 CoAtNet主干, MBConv, CoAtTran 模块</li></br>
 
 <details>
 <summary>版本更新说明</summary>
