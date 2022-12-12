@@ -160,10 +160,10 @@ class Trainer:
             self.ema.update_attr(self.model, include=['nc', 'names', 'stride']) # update attributes for ema model
             if is_val_epoch:
                 self.eval_model()
-                if self.ap >= self.best_ap:
-                    self.best_epoch = self.epoch
                 self.ap = self.evaluate_results[1]
                 self.best_ap = max(self.ap, self.best_ap)
+                if self.ap >= self.best_ap:
+                    self.best_epoch = self.epoch
                 LOGGER.info(f"best mAP@0.50:0.95: {self.best_ap} | best epoch: {self.best_epoch}")
             # save ckpt
             ckpt = {
