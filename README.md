@@ -81,10 +81,10 @@ GPU: 4090 24GB</br>
   
 ### YOLOv6 Pro 改进模块的基准实验
  
- Model  | img size  | MAP0.5 | MAP0.5:0.95 | 预训练模型| epochs | Params(M)| GFLOPs
- ---- | ----- | ------  | ------ | ------ | ------ | ------ | ------
- YOLOv6T  | 640 | 0.787 | 0.560  | None | 100 | 9.68 | 24.84
- YOLOv6T+RepGFPN  | 640 | 0.807 | 0.590  |  None | 100 | 12.20 | 26.01
+ Model  | img size  | MAP0.5 | MAP0.5:0.95 | 预训练模型| epochs | Params(M)| GFLOPs | 数据集
+ ---- | ----- | ------  | ------ | ------ | ------ | ------ | ------ | ------
+ YOLOv6T  | 640 | 0.787 | 0.560  | None | 100 | 9.68 | 24.84 | VOC
+ YOLOv6T+RepGFPN  | 640 | 0.807 | 0.590  |  None | 100 | 12.20 | 26.01 | VOC
   
 - Params and GFLOPs are calculated in the validation phase，the calculation method uses the official YOLOv6 script
  
