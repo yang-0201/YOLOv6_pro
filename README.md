@@ -52,7 +52,7 @@ YOLOv6 Pro 结构：
 - Data from YOLOv6 official
 - 目前 yolov6l，yolov6s，yolov6t，yolov6n 模型大小与精度已经和官方对齐
 
-### YOLOv6 Pro 基准实验
+### YOLOv6 基准实验
 数据集: VOC2007，VOC2012 </br>
 训练集: train_2007, tran_2012, val_2007, test_2007 (16551 images) </br>
 验证集: test_2007 (4952 images) </br>
@@ -78,7 +78,16 @@ GPU: 4090 24GB</br>
  YOLOv6L6  | 640 | 0.866 | 0.674  | None | 100
  
 </details>
-
+  
+### YOLOv6 Pro 改进模块的基准实验
+ 
+ Model  | img size  | MAP0.5 | MAP0.5:0.95 | 预训练模型| epochs | Params(M)| GFLOPs | 数据集
+ ---- | ----- | ------  | ------ | ------ | ------ | ------ | ------ | ------
+ YOLOv6T  | 640 | 0.787 | 0.560  | None | 100 | 9.68 | 24.84 | VOC
+ YOLOv6T+RepGFPN  | 640 | 0.807 | 0.590  |  None | 100 | 12.20 | 26.01 | VOC
+  
+- Params and GFLOPs are calculated in the validation phase，the calculation method uses the official YOLOv6 script
+ 
 ## 训练你的数据集
 ### 数据集配置
 ```
