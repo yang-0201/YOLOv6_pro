@@ -1326,7 +1326,11 @@ class MBConvC3(BepC3):
         super().__init__(in_channels, out_channels)
         c_ = int(out_channels * e)
         self.m = MBConv_block(in_channels = c_, out_channels = c_,num_blocks = num_blocks)
-
+class RepGhostC3(BepC3):
+    def __init__(self, in_channels, out_channels,mid_c, num_blocks = 1, dw_kernel_size = 3,se_ratio = 0.0,width=0.5):  # ch_in, ch_out, number, shortcut, groups, expansion
+        super().__init__(in_channels, out_channels)
+        c_ = int(out_channels * width)
+        self.m = nn.Sequential(*(RepGhostBottleneck(in_chs = c_,exp_size = mid_c, c = int(c_/width),width = width,se_ratio = se_ratio,dw_kernel_size = dw_kernel_size) for _ in range(num_blocks)))
 def get_block(mode):
     if mode == 'repvgg':
         return RepVGGBlock

@@ -60,6 +60,13 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
             c1 = ch[f]
             c2 = args[0]
             args = [c1, c2, *args[1:]]
+        elif m in [RepGhostC3]:
+            c1 = ch[f]
+            c2 = args[0]
+            c_mid = args[1]
+            c2 = make_divisible(c2 * gw, 8)
+            c_mid = make_divisible(c_mid * gw, 8)
+            args = [c1, c2, c_mid,*args[2:]]
         elif m in [RepGhostBottleneck]:
             c1 = args[0]
             c2 = int(args[3] * args[5])
