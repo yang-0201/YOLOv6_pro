@@ -90,7 +90,7 @@ GPU: 4090 24GB</br>
  YOLOv6S  | 640 | 0.795 | 0.567  | None | 100 | 17.19 | 44.09 | VOC
  YOLOv6M  | 640 | 0.836 | 0.629  | None | 100 | 34.3 |82.2 | VOC
  YOLOv6T+RepGFPN  | 640 | 0.807 | 0.590  |  None | 100 | 12.20 | 26.01 | VOC
-  
+ YOLOv6T+FocalC3  | 640 | 0.780 | 0.544  |  None | 100 | 9.47 | 24.53 | VOC
 - Params and GFLOPs are calculated in the validation phase，the calculation method uses the official YOLOv6 script
 - Only 100 epochs of training, does not represent the final performance
 ## 训练你的数据集
