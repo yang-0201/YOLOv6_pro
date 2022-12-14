@@ -18,20 +18,20 @@ neck:
   [[-1, 1, SimConv, [256, 1, 1]],
    [-1, 1, Transpose, [256]],
    [[-1, 6], 1, Concat, [1]],
-   [-1, 12, RepBlock, [256]],
+   [-1, 1, RepGhostC3, [256, 384, 4]],
 
    [-1, 1, SimConv, [128, 1, 1]],
    [-1, 1, Transpose, [128]],
    [[-1, 4], 1, Concat, [1]],
-   [-1, 12, RepBlock, [128]],   #out
+   [-1, 1, RepGhostC3, [128, 192, 4]],   #out
 
    [-1, 1, SimConv, [128, 3, 2]],
    [[-1, 14], 1, Concat, [1]],  # cat head P4
-   [-1, 12, RepBlock, [256]],  # 20 (P4/16-medium)
+   [-1, 1, RepGhostC3, [256, 384, 4]],  # 20 (P4/16-medium)
 
    [-1, 1, SimConv, [256, 3, 2]],
    [[-1, 10], 1, Concat, [1]],  # cat head P5
-   [-1, 12, RepBlock, [512]]]  # 23 (P5/32-large)
+   [-1, 1, RepGhostC3, [512, 768, 4]]]  # 23 (P5/32-large)
 
 effidehead:
   [[17, 1, Head_layers, [128, 0]],#if use_dfl is False, please set reg_max to 0
