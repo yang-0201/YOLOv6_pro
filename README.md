@@ -88,7 +88,7 @@ GPU: 4090 24GB</br>
  ---- | ----- | ------  | ------ | ------ | ------ | ------ | ------ | ------
  YOLOv6T  | 640 | 0.787 | 0.560  | None | 100 | 9.68 | 24.84 | VOC
  YOLOv6S  | 640 | 0.795 | 0.567  | None | 100 | 17.19 | 44.09 | VOC
- YOLOv6M  | 640 | 0.836 | 0.629  | None | 100
+ YOLOv6M  | 640 | 0.836 | 0.629  | None | 100 | 34.3 |82.2 | 
  YOLOv6T+RepGFPN  | 640 | 0.807 | 0.590  |  None | 100 | 12.20 | 26.01 | VOC
   
 - Params and GFLOPs are calculated in the validation phase，the calculation method uses the official YOLOv6 script
