@@ -71,10 +71,13 @@ GPU: 4090 24GB</br>
 
  Model  | img size  | MAP0.5 | MAP0.5:0.95 | 预训练模型| epochs
  ---- | ----- | ------  | ------ | ------ | ------
- YOLOv6N6  | 640 | 0.799 | 0.567  | not all | 100
  YOLOv6N  | 640 | 0.763 | 0.537  |  None | 100
- YOLOv6L6  | 640 | 0.911 | 0.741  | not all | 100
+ YOLOv6T  | 640 | 0.787 | 0.560  | None | 100 
+ YOLOv6S  | 640 | 0.795 | 0.567  | None | 100
+ YOLOv6M  | 640 | 0.836 | 0.629  | None | 100
  YOLOv6L  | 640 | 0.862 | 0.664  | None | 100
+ YOLOv6N6  | 640 | 0.799 | 0.567  | not all | 100
+ YOLOv6L6  | 640 | 0.911 | 0.741  | not all | 100
  YOLOv6L6  | 640 | 0.866 | 0.674  | None | 100
  
 </details>
@@ -85,6 +88,7 @@ GPU: 4090 24GB</br>
  ---- | ----- | ------  | ------ | ------ | ------ | ------ | ------ | ------
  YOLOv6T  | 640 | 0.787 | 0.560  | None | 100 | 9.68 | 24.84 | VOC
  YOLOv6S  | 640 | 0.795 | 0.567  | None | 100 | 17.19 | 44.09 | VOC
+ YOLOv6M  | 640 | 0.836 | 0.629  | None | 100
  YOLOv6T+RepGFPN  | 640 | 0.807 | 0.590  |  None | 100 | 12.20 | 26.01 | VOC
   
 - Params and GFLOPs are calculated in the validation phase，the calculation method uses the official YOLOv6 script
