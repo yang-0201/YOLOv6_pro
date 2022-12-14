@@ -15,6 +15,8 @@ from yolov6.layers.damo_yolo import ConvBNAct,RepGFPN,Focus,SuperResStem
 from yolov6.layers.tiny_nas_csp import TinyNAS_CSP, TinyNAS_CSP_2
 from yolov6.layers.CoAtNet import CoAtNetMBConv,ConvGE,CoAtNetTrans, MBConv_block, CoAtTrans_block
 from yolov6.layers.focal_transformer import FocalTransformer_block
+from yolov6.layers.BotNet import BotNet
+from models.Models.research import BoT3
 class SiLU(nn.Module):
     '''Activation of SiLU'''
     @staticmethod
@@ -380,6 +382,10 @@ class RepBlock(nn.Module):
             self.conv1 = BottleRep(in_channels, out_channels, basic_block=basic_block, weight=True)
             n = n // 2
             self.block = nn.Sequential(*(BottleRep(out_channels, out_channels, basic_block=basic_block, weight=True) for _ in range(n - 1))) if n > 1 else None
+        elif block == BotRep:
+            self.conv1 = BotRep(in_channels, out_channels, basic_block=basic_block, weight=True)
+            n = n // 2
+            self.block = nn.Sequential(*(BotRep(out_channels, out_channels, basic_block=basic_block, weight=True) for _ in range(n - 1))) if n > 1 else None
 
     def forward(self, x):
         x = self.conv1(x)
@@ -718,21 +724,21 @@ class BottleneckTransformer(nn.Module):
         return out
 
 
-class BoT3(nn.Module):
-    # CSP Bottleneck with 3 convolutions
-    def __init__(self, c1, c2, n=1, e=0.5, e2=1, w=20, h=20):  # ch_in, ch_out, number, , expansion,w,h
-        super(BoT3, self).__init__()
-        c_ = int(c2 * e)  # hidden channels
-        self.cv1 = Conv(c1, c_, 1, 1)
-        self.cv2 = Conv(c1, c_, 1, 1)
-        self.cv3 = Conv(2 * c_, c2, 1)  # act=FReLU(c2)
-        self.m = nn.Sequential(
-            *[BottleneckTransformer(c_, c_, stride=1, heads=4, mhsa=True, resolution=(w, h), expansion=e2) for _ in
-              range(n)])
-        # self.m = nn.Sequential(*[CrossConv(c_, c_, 3, 1, g, 1.0, shortcut) for _ in range(n)])
-
-    def forward(self, x):
-        return self.cv3(torch.cat((self.m(self.cv1(x)), self.cv2(x)), dim=1))
+# class BoT3(nn.Module):
+#     # CSP Bottleneck with 3 convolutions
+#     def __init__(self, c1, c2, n=1, e=0.5, e2=1, w=20, h=20):  # ch_in, ch_out, number, , expansion,w,h
+#         super(BoT3, self).__init__()
+#         c_ = int(c2 * e)  # hidden channels
+#         self.cv1 = Conv(c1, c_, 1, 1)
+#         self.cv2 = Conv(c1, c_, 1, 1)
+#         self.cv3 = Conv(2 * c_, c2, 1)  # act=FReLU(c2)
+#         self.m = nn.Sequential(
+#             *[BottleneckTransformer(c_, c_, stride=1, heads=4, mhsa=True, resolution=(w, h), expansion=e2) for _ in
+#               range(n)])
+#         # self.m = nn.Sequential(*[CrossConv(c_, c_, 3, 1, g, 1.0, shortcut) for _ in range(n)])
+#
+#     def forward(self, x):
+#         return self.cv3(torch.cat((self.m(self.cv1(x)), self.cv2(x)), dim=1))
 
 from timm.models.layers import DropPath
 class ConvFFN(nn.Module):
@@ -1331,6 +1337,65 @@ class RepGhostC3(BepC3):
         super().__init__(in_channels, out_channels)
         c_ = int(out_channels * width)
         self.m = nn.Sequential(*(RepGhostBottleneck(in_chs = c_,exp_size = mid_c, c = int(c_/width),width = width,se_ratio = se_ratio,dw_kernel_size = dw_kernel_size) for _ in range(num_blocks)))
+
+class BepBotC3(nn.Module):
+    '''Beer-mug RepC3 Block'''
+
+    def __init__(self, in_channels, out_channels, n=1, block=RepVGGBlock, e=0.5,
+                 concat=True):  # ch_in, ch_out, number, shortcut, groups, expansion
+        super().__init__()
+        c_ = int(out_channels * e)  # hidden channels
+        self.cv1 = Conv_C3(in_channels, c_, 1, 1)
+        self.cv2 = Conv_C3(in_channels, c_, 1, 1)
+        self.cv3 = Conv_C3(2 * c_, out_channels, 1, 1)
+        if block == ConvWrapper:
+            self.cv1 = Conv_C3(in_channels, c_, 1, 1, act=nn.SiLU())
+            self.cv2 = Conv_C3(in_channels, c_, 1, 1, act=nn.SiLU())
+            self.cv3 = Conv_C3(2 * c_, out_channels, 1, 1, act=nn.SiLU())
+
+        self.m = RepBlock(in_channels=c_, out_channels=c_, n=n, block=BotRep, basic_block=block)
+        self.concat = concat
+        if not concat:
+            self.cv3 = Conv_C3(c_, out_channels, 1, 1)
+
+    def forward(self, x):
+        if self.concat is True:
+            return self.cv3(torch.cat((self.m(self.cv1(x)), self.cv2(x)), dim=1))
+        else:
+            return self.cv3(self.m(self.cv1(x)))
+from yolov6.layers.BotNet import Attention
+class BotRep(nn.Module):
+
+    def __init__(self, in_channels, out_channels, head = 4,dim_head = 128,rel_pos_emb = False, basic_block=RepVGGBlock, weight=False):
+        super().__init__()
+        attn_dim_out = head * dim_head
+        self.conv1 = basic_block(in_channels, out_channels)
+        self.botAttention = nn.Sequential(
+            Attention(
+                dim = out_channels,
+                heads = head,
+                dim_head = dim_head,
+                rel_pos_emb = rel_pos_emb
+            ),
+            nn.Identity(),
+            nn.BatchNorm2d(attn_dim_out),
+            nn.ReLU(),
+        )
+        self.conv2 = basic_block(attn_dim_out, out_channels)
+        if in_channels != out_channels:
+            self.shortcut = False
+        else:
+            self.shortcut = True
+        if weight:
+            self.alpha = Parameter(torch.ones(1))
+        else:
+            self.alpha = 1.0
+
+    def forward(self, x):
+        outputs = self.conv1(x)
+        outputs = self.botAttention(outputs)
+        outputs = self.conv2(outputs)
+        return outputs + self.alpha * x if self.shortcut else outputs
 def get_block(mode):
     if mode == 'repvgg':
         return RepVGGBlock

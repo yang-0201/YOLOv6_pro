@@ -25,7 +25,7 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
                 pass
 
         n = n_  = max(round(n * gd), 1) if n > 1 else n  # depth gain
-        if m in [Conv_C3,Bottleneck, SPPF,C3,RepBlock,SimConv,RepVGGBlock,Transpose,SimSPPF,BepC3,SimConv1]:
+        if m in [Conv_C3,Bottleneck, SPPF,C3,RepBlock,SimConv,RepVGGBlock,Transpose,SimSPPF,BepC3, BepBotC3]:
             c1, c2 = ch[f], args[0]
             c2 = make_divisible(c2 * gw, 8)
 
@@ -39,7 +39,7 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
             c2 = sum(ch[x] for x in f)
         elif m in [Out]:
             pass
-        elif m in [Head_layers,Head_out, BoT3]:
+        elif m in [Head_layers,Head_out]:
             c1, c2 = ch[f], args[0]
             c2 = make_divisible(c2 * gw, 8)
             args = [c2, args[1],nc]
@@ -47,6 +47,11 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
             c1 = ch[f]
             c2 = args[0]
             args = [c1, c2, *args[1:]]
+        elif m in [FocalC3, BoT3, BotNet]:
+            c1 = ch[f]
+            c2 = args[0]
+            c2 = make_divisible(c2 * gw, 8)
+            args = [c1, c2 ,*args[1:]]
         elif m in [ConvBNAct]:
             c1 = ch[f]
             c2 = args[0]
@@ -55,7 +60,7 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
         elif m in [Focus, TinyNAS_CSP_2]:
             c1 = args[0]
             c2 = args[1]
-        elif m in [SuperResStem, TinyNAS_CSP, RepGFPN, ConvBnAct, FocalTransformer, FocalC3, CoAtNetMBConv, ConvGE, CoAtNetTrans, MBConv_block, CoAtTrans_block,
+        elif m in [SuperResStem, TinyNAS_CSP, RepGFPN, ConvBnAct, FocalTransformer, CoAtNetMBConv, ConvGE, CoAtNetTrans, MBConv_block, CoAtTrans_block,
                    MBConvC3]:
             c1 = ch[f]
             c2 = args[0]
