@@ -43,7 +43,7 @@ YOLOv6 Pro 结构：
 | Model                                                        | Size | mAP<sup>val<br/>0.5:0.95              | Speed<sup>T4<br/>trt fp16 b1 <br/>(fps) | Speed<sup>T4<br/>trt fp16 b32 <br/>(fps) | Params<br/><sup> (M) | FLOPs<br/><sup> (G) |
 | :----------------------------------------------------------- | ---- | :------------------------------------ | --------------------------------------- | ---------------------------------------- | -------------------- | ------------------- |
 | [**YOLOv6-N**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6n_yaml_new.pt) | 640  | 35.9<sup>300e</sup><br/>36.3<sup>400e | 802                                     | 1234                                     | 4.3                  | 11.1                |
-| [**YOLOv6-T**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6t_yaml_new.pt) | 640  | 40.3<sup>300e</sup><br/>41.1<sup>400e | 449                                     | 659                                      | 15.0                 | 36.7                |
+| [**YOLOv6-T**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6t_yaml_new.pt) | 640  | 40.3<sup>300e</sup><br/>41.1<sup>400e | 449                                     | 659                                      | 9.7                 | 24.9                |
 | [**YOLOv6-S**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6s_yaml_new.pt) | 640  | 43.5<sup>300e</sup><br/>43.8<sup>400e | 358                                     | 495                                      | 17.2                 | 44.2                |
 | [**YOLOv6-M**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6m_yaml_new.pt) | 640  | 49.5                                  | 179                                     | 233                                      | 34.3                 | 82.2                |
 | [**YOLOv6-L-ReLU**](https://github.com/yang-0201/YOLOv6_pro/releases/download/v0.0.2/yolov6l_yaml_new.pt) | 640  | 51.7                                  | 113                                     | 149                                      | 58.5                 | 144.0               |
@@ -71,10 +71,13 @@ GPU: 4090 24GB</br>
 
  Model  | img size  | MAP0.5 | MAP0.5:0.95 | 预训练模型| epochs
  ---- | ----- | ------  | ------ | ------ | ------
- YOLOv6N6  | 640 | 0.799 | 0.567  | not all | 100
  YOLOv6N  | 640 | 0.763 | 0.537  |  None | 100
- YOLOv6L6  | 640 | 0.911 | 0.741  | not all | 100
+ YOLOv6T  | 640 | 0.787 | 0.560  | None | 100 
+ YOLOv6S  | 640 | 0.795 | 0.567  | None | 100
+ YOLOv6M  | 640 | 0.836 | 0.629  | None | 100
  YOLOv6L  | 640 | 0.862 | 0.664  | None | 100
+ YOLOv6N6  | 640 | 0.799 | 0.567  | not all | 100
+ YOLOv6L6  | 640 | 0.911 | 0.741  | not all | 100
  YOLOv6L6  | 640 | 0.866 | 0.674  | None | 100
  
 </details>
@@ -84,10 +87,12 @@ GPU: 4090 24GB</br>
  Model  | img size  | MAP0.5 | MAP0.5:0.95 | 预训练模型| epochs | Params(M)| GFLOPs | 数据集
  ---- | ----- | ------  | ------ | ------ | ------ | ------ | ------ | ------
  YOLOv6T  | 640 | 0.787 | 0.560  | None | 100 | 9.68 | 24.84 | VOC
+ YOLOv6S  | 640 | 0.795 | 0.567  | None | 100 | 17.19 | 44.09 | VOC
+ YOLOv6M  | 640 | 0.836 | 0.629  | None | 100 | 34.3 |82.2 | VOC
  YOLOv6T+RepGFPN  | 640 | 0.807 | 0.590  |  None | 100 | 12.20 | 26.01 | VOC
-  
+ YOLOv6T+FocalC3  | 640 | 0.780 | 0.544  |  None | 100 | 9.47 | 24.53 | VOC
 - Params and GFLOPs are calculated in the validation phase，the calculation method uses the official YOLOv6 script
- 
+- Only 100 epochs of training, does not represent the final performance
 ## 训练你的数据集
 ### 数据集配置
 ```
