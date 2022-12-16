@@ -39,7 +39,7 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
             c2 = sum(ch[x] for x in f)
         elif m in [Out]:
             pass
-        elif m in [Head_layers,Head_out]:
+        elif m in [Head_layers, Head_out, Head_simota]:
             c1, c2 = ch[f], args[0]
             c2 = make_divisible(c2 * gw, 8)
             args = [c2, args[1],nc]
@@ -75,6 +75,8 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
         elif m in [RepGhostBottleneck]:
             c1 = args[0]
             c2 = int(args[3] * args[5])
+        elif m in [Add_down]:
+            c2 = args[1]
         else:
             c2 = ch[f]
 
@@ -119,7 +121,18 @@ class Model(nn.Module):
             # self.detect = build_network_yaml(config, channels, num_classes, anchors, num_layers)
             use_dfl = config.model.head.use_dfl
             stride = config.model.head.strides
-            self.detect = Detect_yaml(num_classes, anchors, num_layers ,use_dfl=use_dfl,stride = stride)
+            try:
+                if config.model.target == "SimOTA":
+                    use_simota = True
+            except:
+                use_simota = False
+
+
+
+            if use_simota:
+                self.detect = Detect_simota(num_classes, anchors, num_layers)
+            else:
+                self.detect = Detect_yaml(num_classes, anchors, num_layers, use_dfl=use_dfl, stride=stride)
             self.stride = self.detect.stride
             self.detect.initialize_biases()
         else:
@@ -226,6 +239,7 @@ def build_network(config, channels, num_classes, anchors, num_layers,val_loss = 
     head_layers = build_effidehead_layer(channels_list, num_anchors, num_classes, reg_max)
 
     head = Detect(num_classes, anchors, num_layers, head_layers=head_layers, use_dfl=use_dfl)
+
     return backbone, neck, head
 
 def build_network_yaml(config, channels, num_classes, anchors, num_layers):
@@ -343,7 +357,64 @@ class Detect_yaml(nn.Module):
                     cls_score_list
                 ],
                 axis=-1)
+class Detect_simota(nn.Module):
+    '''Efficient Decoupled Head
+    With hardware-aware degisn, the decoupled head is optimized with
+    hybridchannels methods.
+    '''
+    def __init__(self, num_classes=80, anchors=1, num_layers=3, inplace=True, head_layers=None):  # detection layer
+        super().__init__()
+        self.nc = num_classes  # number of classes
+        self.no = num_classes + 5  # number of outputs per anchor
+        self.nl = num_layers  # number of detection layers
+        if isinstance(anchors, (list, tuple)):
+            self.na = len(anchors[0]) // 2
+        else:
+            self.na = anchors
+        self.anchors = anchors
+        self.grid = [torch.zeros(1)] * num_layers
+        self.prior_prob = 1e-2
+        self.inplace = inplace
+        stride = [8, 16, 32]  # strides computed during build
+        self.stride = torch.tensor(stride)
 
+        # Init decouple head
+
+
+        # Efficient decoupled head layers
+    def initialize_biases(self):
+        pass
+
+
+
+    def forward(self, x, val_loss = False):
+        z = []
+        for i in range(self.nl):
+
+            cls_output = x[i][0]
+            reg_output = x[i][1]
+            obj_output = x[i][2]
+            if self.training:
+                x[i] = torch.cat([reg_output, obj_output, cls_output], 1)
+                bs, _, ny, nx = x[i].shape
+                x[i] = x[i].view(bs, self.na, self.no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
+            else:
+                y = torch.cat([reg_output, obj_output.sigmoid(), cls_output.sigmoid()], 1)
+                bs, _, ny, nx = y.shape
+                y = y.view(bs, self.na, self.no, ny, nx).permute(0, 1, 3, 4, 2).contiguous()
+                if self.grid[i].shape[2:4] != y.shape[2:4]:
+                    d = self.stride.device
+                    yv, xv = torch.meshgrid([torch.arange(ny).to(d), torch.arange(nx).to(d)])
+                    self.grid[i] = torch.stack((xv, yv), 2).view(1, self.na, ny, nx, 2).float()
+                if self.inplace:
+                    y[..., 0:2] = (y[..., 0:2] + self.grid[i]) * self.stride[i]  # xy
+                    y[..., 2:4] = torch.exp(y[..., 2:4]) * self.stride[i] # wh
+                else:
+                    xy = (y[..., 0:2] + self.grid[i]) * self.stride[i]  # xy
+                    wh = torch.exp(y[..., 2:4]) * self.stride[i]  # wh
+                    y = torch.cat((xy, wh, y[..., 4:]), -1)
+                z.append(y.view(bs, -1, self.no))
+        return x if self.training else torch.cat(z, 1)
 def get_model_info(model, img_size=640, cfg = None):
     """Get model Params and GFlops.
     Code base on https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/utils/model_utils.py

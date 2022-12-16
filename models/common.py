@@ -1768,3 +1768,15 @@ class CSPNeXtLayer(BaseModule):
 
         x_final = torch.cat((x_main, x_short), dim=1)
         return self.final_conv(x_final)
+class Add_down(nn.Module):
+    def __init__(self,c1 = 64,c2 = 64,scale_factor = 2):
+        super().__init__()
+        self.conv = Conv(c1 = c1,c2 = c2,k = 1, s = 1)
+        self.scale_factor = scale_factor
+        if scale_factor != 0:
+            self.up = nn.Upsample(scale_factor=scale_factor,mode='nearest')
+    def forward(self,x):
+        if self.scale_factor != 0:
+            x[1] = self.up(x[1])
+        x[1] = self.conv(x[1])
+        return x[0]+x[1]

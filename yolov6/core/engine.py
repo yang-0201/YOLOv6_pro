@@ -26,7 +26,7 @@ from yolov6.utils.checkpoint import load_state_dict,load_state_dict_yaml, save_c
 from yolov6.solver.build import build_optimizer, build_lr_scheduler
 from yolov6.utils.RepOptimizer import extract_scales, RepVGGOptimizer
 from yolov6.utils.nms import xywh2xyxy
-
+from yolov6.models.simOTA import ComputeLoss_SimOTA
 
 class Trainer:
     def __init__(self, args, cfg, device):
@@ -91,6 +91,9 @@ class Trainer:
 
         self.loss_num = 3
         self.loss_info = ['Epoch', 'iou_loss', 'dfl_loss', 'cls_loss']
+        if self.args.simota:
+            self.loss_num = 4
+            self.loss_info = ['Epoch', 'iou_loss', 'l1_loss', 'obj_loss',' class_loss']
         if self.args.distill:
             self.loss_num += 1
             self.loss_info += ['cwd_loss']
@@ -142,6 +145,8 @@ class Trainer:
                 temperature = self.args.temperature
                 total_loss, loss_items = self.compute_loss_distill(preds, t_preds, s_featmaps, t_featmaps, targets, \
                                                                    epoch_num, self.max_epoch, temperature, step_num)
+            elif self.args.simota:
+                total_loss, loss_items = self.compute_loss_simota(preds, targets)
             else:
                 total_loss, loss_items = self.compute_loss(preds, targets, epoch_num, step_num)
             if self.rank != -1:
@@ -276,6 +281,14 @@ class Trainer:
                                                             distill_weight = self.cfg.model.head.distill_weight,
                                                             distill_feat = self.args.distill_feat,
                                                             )
+        if self.args.simota:
+            self.compute_loss_simota = ComputeLoss_SimOTA(
+                                            strides=self.cfg.model.head.strides,
+                                            # num_classes=self.data_dict['nc'],
+                                            # ori_img_size=self.img_size,
+                                            # use_dfl=self.cfg.model.head.use_dfl,
+                                            # reg_max=self.cfg.model.head.reg_max,
+                                            iou_type=self.cfg.model.head.iou_type)
 
     def prepare_for_steps(self):
         if self.epoch > self.start_epoch:

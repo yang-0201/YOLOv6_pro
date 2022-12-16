@@ -17,6 +17,7 @@ from yolov6.layers.CoAtNet import CoAtNetMBConv,ConvGE,CoAtNetTrans, MBConv_bloc
 from yolov6.layers.focal_transformer import FocalTransformer_block
 from yolov6.layers.BotNet import BotNet
 from models.Models.research import BoT3
+from models.common import C3,Add_down
 class SiLU(nn.Module):
     '''Activation of SiLU'''
     @staticmethod
@@ -459,18 +460,8 @@ class BepC3(nn.Module):
         else:
             return self.cv3(self.m(self.cv1(x)))
 
-class C3(nn.Module):
-    # CSP Bottleneck with 3 convolutions
-    def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):  # ch_in, ch_out, number, shortcut, groups, expansion
-        super().__init__()
-        c_ = int(c2 * e)  # hidden channels
-        self.cv1 = Conv_C3(c1, c_, 1, 1)
-        self.cv2 = Conv_C3(c1, c_, 1, 1)
-        self.cv3 = Conv_C3(2 * c_, c2, 1)  # act=FReLU(c2)
-        self.m = nn.Sequential(*(Bottleneck(c_, c_, shortcut, g, e=1.0) for _ in range(n)))
 
-    def forward(self, x):
-        return self.cv3(torch.cat((self.m(self.cv1(x)), self.cv2(x)), dim=1))
+
 class Bottleneck(nn.Module):
     # Standard bottleneck
     def __init__(self, c1, c2, shortcut=True, g=1, e=0.5):  # ch_in, ch_out, shortcut, groups, expansion
@@ -607,6 +598,45 @@ class Head_layers(nn.Module):
         reg_output = self.reg_pred(reg_feat)
 
         return x, cls_output, reg_output
+
+class Head_simota(nn.Module):
+    def __init__(self,in_channels,reg_max = 16,num_classes = 3, num_anchors = 1):
+        super(Head_simota, self).__init__()
+        self.stem = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=1, stride=1)
+        # cls_conv0
+        self.cls_conv = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=1)
+        # reg_conv0
+        self.reg_conv = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=1)
+        # cls_pred0
+        self.cls_pred = nn.Conv2d(in_channels=in_channels, out_channels=num_classes * num_anchors, kernel_size=1)
+        # reg_pred0
+        self.reg_pred = nn.Conv2d(in_channels=in_channels, out_channels=4 * (reg_max + num_anchors), kernel_size=1)
+
+        self.obj_pred = nn.Conv2d(in_channels=in_channels, out_channels=1 * (num_anchors), kernel_size=1)
+        self.prior_prob = 1e-2
+        self.initialize_biases()
+    def initialize_biases(self):
+        self.na = 1
+        b = self.cls_pred.bias.view(self.na, -1)
+        b.data.fill_(-math.log((1 - self.prior_prob) / self.prior_prob))
+        self.cls_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+
+        b = self.obj_pred.bias.view(self.na, -1)
+        b.data.fill_(-math.log((1 - self.prior_prob) / self.prior_prob))
+        self.obj_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+
+    def forward(self,x):
+        x = self.stem(x)
+        cls_x = x
+        reg_x = x
+        cls_feat = self.cls_conv(cls_x)
+        cls_output = self.cls_pred(cls_feat)
+        # cls_output = torch.sigmoid(cls_output)
+        reg_feat = self.reg_conv(reg_x)
+        reg_output = self.reg_pred(reg_feat)
+        obj_pred = self.obj_pred(reg_feat)
+
+        return cls_output, reg_output, obj_pred
 class Head_out(nn.Module):
     def __init__(self,in_channels,reg_max = 16,num_classes = 3, num_anchors = 1):
         super(Head_out, self).__init__()
@@ -1369,7 +1399,7 @@ class BotRep(nn.Module):
     def __init__(self, in_channels, out_channels, head = 4,dim_head = 128,rel_pos_emb = False, basic_block=RepVGGBlock, weight=False):
         super().__init__()
         attn_dim_out = head * dim_head
-        self.conv1 = basic_block(in_channels, out_channels)
+        # self.conv1 = basic_block(in_channels, out_channels)
         self.botAttention = nn.Sequential(
             Attention(
                 dim = out_channels,
@@ -1392,8 +1422,8 @@ class BotRep(nn.Module):
             self.alpha = 1.0
 
     def forward(self, x):
-        outputs = self.conv1(x)
-        outputs = self.botAttention(outputs)
+        # outputs = self.conv1(x)
+        outputs = self.botAttention(x)
         outputs = self.conv2(outputs)
         return outputs + self.alpha * x if self.shortcut else outputs
 def get_block(mode):
