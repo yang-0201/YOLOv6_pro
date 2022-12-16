@@ -28,15 +28,20 @@
 </details>
 
 YOLOv6 Pro 结构：
-<li>增加 DAMO YOLO 中的 neck：GiraffeNeckV2 M,S,T</li>
+<li>增加 DAMO YOLO 中的 neck：RepGFPN M,S,T</li>
 <li>增加 RepGhost 模块和 RepGhostNet1.0× backbone</li>
 <li>增加 FocalTransformer, FocalTRC3模块</li>
-<li>增加 CoAtNet 主干, MBConv, CoAtTran 模块</li></br>
+<li>增加 CoAtNet 主干, MBConv, CoAtTran 模块</li>
+<li>增加 SimOTA标签分配策略</li></br>
 
 <details>
 <summary>版本更新说明</summary>
-<li> [ 2022/12/4 ] v1.0.0 版本，对齐完善了几个基础模型的大小和精度，增加 wandb 记录模型训练曲线 </li>
+<li> [ 2022/12/4 ] v1.0.0 版本，对齐完善了几个基础模型的大小和精度，构建 YOLOv6l6，YOLOv6n6，增加 wandb 记录模型训练曲线 </li>
 <li> [ 2022/12/8 ]增加 GiraffeNeckV2，RepGhost，增加 VOC 数据集上的 YOLOv6 Pro 基准实验结果</li>
+<li> [ 2022/12/10 ]增加 DAMO YOLO 中的 neck RepGFPN M,S,T</li>
+<li> [ 2022/12/12 ]增加 FocalTransformer 中的模块，并组合为 FocalC3 模块</li>
+<li> [ 2022/12/14 ]增加 RepGhost，CoAtNet 模块，其中 coatNet 包括两个 MBConv 层和两个 CoAtTran 层，组成卷积+ transformer 的主干网络结构</li>
+<li> [ 2022/12/16 ]增加YOLOv6 第一个版本使用的 SimOTA 标签分配策略</li>
 </details>
 
 ## Benchmark
