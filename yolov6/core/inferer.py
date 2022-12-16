@@ -64,11 +64,13 @@ class Inferer:
 
         LOGGER.info("Switch model to deploy modality.")
 
-    def infer(self, conf_thres, iou_thres, classes, agnostic_nms, max_det, save_dir, save_txt, save_img, hide_labels, hide_conf, view_img=True):
+    def infer(self, conf_thres, iou_thres, classes, agnostic_nms, max_det, save_dir,save_crops, save_txt, save_img, hide_labels, hide_conf,view_img):
         ''' Model Inference and results visualization '''
         vid_path, vid_writer, windows = None, None, []
         fps_calculator = CalcFPS()
+        all_number = 0
         for img_src, img_path, vid_cap in tqdm(self.files):
+
             img, img_src = self.precess_image(img_src, self.img_size, self.stride, self.half)
             img = img.to(self.device)
             if len(img.shape) == 3:
@@ -107,6 +109,17 @@ class Inferer:
 
                         self.plot_box_and_label(img_ori, max(round(sum(img_ori.shape) / 2 * 0.003), 2), xyxy, label, color=self.generate_colors(class_num, True))
 
+                    if save_crops:
+                        if self.files.type == 'image':
+                            save_one_box(xyxy, img_src, file="runs/inference/exp/1.jpg", BGR=True)
+                        else:
+                            file = "runs/inference/exp/video.jpg"
+                            file_list = file.split("/")
+                            file_list[-1] = "video_frame" + str(all_number) + "_0.jpg"
+                            file = '/'.join(file_list)
+                            save_one_box(xyxy, img_src, file=file, BGR=True, video=True)
+                all_number = all_number + 1
+
                 img_src = np.asarray(img_ori)
 
             # FPS counter
@@ -133,6 +146,7 @@ class Inferer:
                 cv2.waitKey(1)  # 1 millisecond
 
             # Save results (image with detections)
+
             if save_img:
                 if self.files.type == 'image':
                     cv2.imwrite(save_path, img_src)
@@ -286,3 +300,62 @@ class CalcFPS:
             return np.average(self.framerate)
         else:
             return 0.0
+
+
+
+
+def xyxy2xywh(x):
+    # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] where xy1=top-left, xy2=bottom-right
+    y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
+    y[:, 0] = (x[:, 0] + x[:, 2]) / 2  # x center
+    y[:, 1] = (x[:, 1] + x[:, 3]) / 2  # y center
+    y[:, 2] = x[:, 2] - x[:, 0]  # width
+    y[:, 3] = x[:, 3] - x[:, 1]  # height
+    return y
+def xywh2xyxy(x):
+    # Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
+    y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
+    y[:, 0] = x[:, 0] - x[:, 2] / 2  # top left x
+    y[:, 1] = x[:, 1] - x[:, 3] / 2  # top left y
+    y[:, 2] = x[:, 0] + x[:, 2] / 2  # bottom right x
+    y[:, 3] = x[:, 1] + x[:, 3] / 2  # bottom right y
+    return y
+def clip_coords(boxes, shape):
+    # Clip bounding xyxy bounding boxes to image shape (height, width)
+    if isinstance(boxes, torch.Tensor):  # faster individually
+        boxes[:, 0].clamp_(0, shape[1])  # x1
+        boxes[:, 1].clamp_(0, shape[0])  # y1
+        boxes[:, 2].clamp_(0, shape[1])  # x2
+        boxes[:, 3].clamp_(0, shape[0])  # y2
+    else:  # np.array (faster grouped)
+        boxes[:, [0, 2]] = boxes[:, [0, 2]].clip(0, shape[1])  # x1, x2
+        boxes[:, [1, 3]] = boxes[:, [1, 3]].clip(0, shape[0])  # y1, y2
+import glob
+import re
+def increment_path(path, exist_ok=False, sep='', mkdir=False):
+    # Increment file or directory path, i.e. runs/exp --> runs/exp{sep}2, runs/exp{sep}3, ... etc.
+    path = Path(path)  # os-agnostic
+    if path.exists() and not exist_ok:
+        path, suffix = (path.with_suffix(''), path.suffix) if path.is_file() else (path, '')
+        dirs = glob.glob(f"{path}{sep}*")  # similar paths
+        matches = [re.search(rf"%s{sep}(\d+)" % path.stem, d) for d in dirs]
+        i = [int(m.groups()[0]) for m in matches if m]  # indices
+        n = max(i) + 1 if i else 2  # increment number
+        path = Path(f"{path}{sep}{n}{suffix}")  # increment path
+    if mkdir:
+        path.mkdir(parents=True, exist_ok=True)  # make directory
+    return path
+def save_one_box(xyxy, im, file='image.jpg', gain=1.02, pad=10, square=False, BGR=False, save=True,video = False):
+    # Save image crop as {file} with crop size multiple {gain} and {pad} pixels. Save and/or return crop
+    xyxy = torch.tensor(xyxy).view(-1, 4)
+    b = xyxy2xywh(xyxy)  # boxes
+    if square:
+        b[:, 2:] = b[:, 2:].max(1)[0].unsqueeze(1)  # attempt rectangle to square
+    b[:, 2:] = b[:, 2:] * gain + pad  # box wh * gain + pad
+    xyxy = xywh2xyxy(b).long()
+    clip_coords(xyxy, im.shape)
+    crop = im[int(xyxy[0, 1]):int(xyxy[0, 3]), int(xyxy[0, 0]):int(xyxy[0, 2]), ::(1 if BGR else -1)]
+
+    if save:
+        cv2.imwrite(str(increment_path(file).with_suffix('.jpg')), crop)
+    return crop

@@ -17,10 +17,10 @@ from yolov6.core.inferer import Inferer
 
 def get_args_parser(add_help=True):
     parser = argparse.ArgumentParser(description='YOLOv6 PyTorch Inference.', add_help=add_help)
-    parser.add_argument('--weights', type=str, default='weights/497.pt', help='model path(s) for inference.')
+    parser.add_argument('--weights', type=str, default='weights/yolov6n.pt', help='model path(s) for inference.')
     parser.add_argument('--source', type=str, default='data/images/val', help='the source path, e.g. image-file/dir.')
-    parser.add_argument('--yaml', type=str, default='data/dataset.yaml', help='data yaml file.')
-    parser.add_argument('--img-size', nargs='+', type=int, default=[1280, 1280], help='the image-size(h,w) in inference size.')
+    parser.add_argument('--yaml', type=str, default='data/coco.yaml', help='data yaml file.')
+    parser.add_argument('--img-size', nargs='+', type=int, default=[640, 640], help='the image-size(h,w) in inference size.')
     parser.add_argument('--conf-thres', type=float, default=0.4, help='confidence threshold for inference.')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='NMS IoU threshold for inference.')
     parser.add_argument('--max-det', type=int, default=1000, help='maximal inferences per image.')
@@ -36,6 +36,7 @@ def get_args_parser(add_help=True):
     parser.add_argument('--hide-labels', default=False, action='store_true', help='hide labels.')
     parser.add_argument('--hide-conf', default=False, action='store_true', help='hide confidences.')
     parser.add_argument('--half', action='store_true', help='whether to use FP16 half-precision inference.')
+    parser.add_argument('--save-crops', action='store_true', help='save crops.')
 
     args = parser.parse_args()
     LOGGER.info(args)
@@ -51,6 +52,7 @@ def run(weights=osp.join(ROOT, 'yolov6s.pt'),
         iou_thres=0.45,
         max_det=1000,
         device='',
+        save_crops = False,
         save_txt=False,
         save_img=True,
         save_dir=None,
@@ -62,6 +64,7 @@ def run(weights=osp.join(ROOT, 'yolov6s.pt'),
         hide_labels=False,
         hide_conf=False,
         half=False,
+
         ):
     """ Inference process, supporting inference on one image file or directory which containing images.
     Args:
@@ -101,7 +104,7 @@ def run(weights=osp.join(ROOT, 'yolov6s.pt'),
 
     # Inference
     inferer = Inferer(source, weights, device, yaml, img_size, half)
-    inferer.infer(conf_thres, iou_thres, classes, agnostic_nms, max_det, save_dir, save_txt, save_img, hide_labels, hide_conf, view_img)
+    inferer.infer(conf_thres, iou_thres, classes, agnostic_nms, max_det, save_dir, save_crops, save_txt, save_img, hide_labels, hide_conf, view_img)
 
     if save_txt or save_img:
         LOGGER.info(f"Results saved to {save_dir}")
