@@ -237,16 +237,35 @@ def model_info(model, verbose=False, img_size=640, cfg = None):
             name = name.replace('module_list.', '')
             print('%5g %40s %9s %12g %20s %10.3g %10.3g' %
                   (i, name, p.requires_grad, p.numel(), list(p.shape), p.mean(), p.std()))
-    try:  # FLOPs
+    try:
         from thop import profile
         stride = max(int(model.stride.max()), 32) if hasattr(model, 'stride') else 32
         img = torch.zeros((1, 3, stride, stride), device=next(model.parameters()).device)  # input
         flops = profile(deepcopy(model), inputs=(img,), verbose=False)[0] / 1E9 * 2  # stride GFLOPs
         img_size = img_size if isinstance(img_size, list) else [img_size, img_size]  # expand if int/float
         fs = ', %.1f GFLOPs for 640x640 image' % (flops * img_size[0] / stride * img_size[1] / stride)  # 640x640 GFLOPs
-    except (ImportError, Exception):
-        fs = ''
+    except:
+        fs = ""
         print("error in GFLOPs")
+
+    # from ptflops import get_model_complexity_info
+    #
+    #
+    # flops, params = get_model_complexity_info(model, (3, 640, 640), as_strings=True, print_per_layer_stat=True)
+    # print('flops: ', flops, 'params: ', params)
+
+
+    # from tools.get_flops import get_model_complexity_info
+    # get_model_complexity_info
+    # input_shape = (3, 640, 640)
+    # flops, params = get_model_complexity_info(model, (3, 640, 640))
+    # split_line = '=' * 30
+    #
+    # print(f'{split_line}\nInput shape: {input_shape}\n'
+    #       f'Flops: {flops}\nParams: {params}\n{split_line}')
+    # print('!!!Please be cautious if you use the results in papers. '
+    #       'You may need to check if all ops are supported and verify that the '
+    #       'flops computation is correct.')
 
     LOGGER.info(f"Model Summary: {len(list(model.modules()))} layers, {n_p} parameters, {n_g} gradients{fs}")
 

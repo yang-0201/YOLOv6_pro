@@ -73,7 +73,7 @@ class ComputeLoss:
         # pboxes
         anchor_points_s = anchor_points / stride_tensor
         pred_bboxes = self.bbox_decode(anchor_points_s, pred_distri) #xyxy
-
+        ######################### 标签匹配策略   warmup_epoch 使用ATSS策略，后续使用TAL标签分配
         try:
             if epoch_num < self.warmup_epoch:
                 target_labels, target_bboxes, target_scores, fg_mask = \
@@ -142,6 +142,7 @@ class ComputeLoss:
             target_bboxes = target_bboxes.cuda()
             target_scores = target_scores.cuda()
             fg_mask = fg_mask.cuda()
+        ######################### 标签匹配策略结束
         #Dynamic release GPU memory
         if step_num % 10 == 0:
             torch.cuda.empty_cache()

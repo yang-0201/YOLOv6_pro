@@ -1,0 +1,52 @@
+depth_multiple: 1.0  # model depth multiple
+width_multiple: 1.0  # layer channel multiple
+backbone:
+  # [from, number, module, args]
+  [[-1, 1, ConvModule, [32, 3, 2]],  #/2
+   [-1, 1, ConvModule, [32, 3, 1]],
+   [-1, 1, ConvModule, [64, 3, 1]],
+
+   [-1, 1, ConvModule, [128, 3, 2]], # /4
+   [-1, 3, CSPNeXtLayer, [128]],
+
+   [-1, 1, ConvModule, [256, 3, 2]], # /8
+   [-1, 6, CSPNeXtLayer, [256]],  # 6
+
+   [-1, 1, ConvModule, [512, 3, 2]], # /16
+   [-1, 6, CSPNeXtLayer, [512]], # 8
+
+   [-1, 1, ConvModule, [1024, 3, 2]], # /32
+   [-1, 1, SPPF, [1024, 5]],
+   [-1, 3, CSPNeXtLayer, [1024]] # 11
+  ]
+neck:
+  [[-1, 1, ConvModule, [512, 1, 1]], # 12
+   [-1, 1, nn.Upsample, [None, 2, 'nearest' ]],
+   [[-1, 8], 1, Concat, [1]],
+   [-1, 3, CSPNeXtLayer, [512, False, False]],  # do not use depConv,add,channel attention
+
+   [-1, 1, ConvModule, [256, 1, 1]],# 16
+   [-1, 1, nn.Upsample, [None, 2, 'nearest' ]],
+   [[-1, 6], 1, Concat, [1]],
+   [-1, 3, CSPNeXtLayer, [256, False, False]], # 19
+
+   [-1, 1, ConvModule, [256, 3, 2]],
+   [[-1, 16], 1, Concat, [1]],
+   [-1, 3, CSPNeXtLayer, [512, False, False]], # 22
+
+   [-1, 1, ConvModule, [512, 3, 2]],
+   [[-1, 12], 1, Concat, [1]],
+   [-1, 3, CSPNeXtLayer, [1024, False, False]], # 25
+
+   [19, 1, ConvModule, [256, 3, 1]],
+   [22, 1, ConvModule, [256, 3, 1]],
+   [25, 1, ConvModule, [256, 3, 1]],
+  ]
+
+effidehead:
+  [[26, 1, Head_RTM, [256, 16]],
+  [27, 1, Head_RTM, [256, 16]],
+  [28, 1, Head_RTM, [256, 16]],
+  [[29, 30, 31], 1, Out, []]]
+
+

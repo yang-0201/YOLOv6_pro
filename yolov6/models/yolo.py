@@ -25,12 +25,12 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
                 pass
 
         n = n_  = max(round(n * gd), 1) if n > 1 else n  # depth gain
-        if m in [Conv_C3,Bottleneck, SPPF,C3,RepBlock,SimConv,RepVGGBlock,Transpose,SimSPPF,BepC3, BepBotC3]:
+        if m in [Conv_C3,Bottleneck, SPPF,C3,RepBlock,SimConv,RepVGGBlock,Transpose,SimSPPF,SPPCSPC,BepC3, BepBotC3, CSPNeXtLayer, ConvModule, Conv]:
             c1, c2 = ch[f], args[0]
             c2 = make_divisible(c2 * gw, 8)
 
             args = [c1, c2, *args[1:]]
-            if m in [C3,RepBlock]:
+            if m in [C3, RepBlock, CSPNeXtLayer]:
                 args.insert(2, n)  # number of repeats
                 n = 1
         elif m is nn.BatchNorm2d:
@@ -39,10 +39,14 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
             c2 = sum(ch[x] for x in f)
         elif m in [Out]:
             pass
-        elif m in [Head_layers, Head_out, Head_simota]:
+        elif m in [Head_layers, Head_out, Head_simota, Head_RTM]:
             c1, c2 = ch[f], args[0]
             c2 = make_divisible(c2 * gw, 8)
-            args = [c2, args[1],nc]
+            args = [c1,c2, args[1],nc]
+        elif m in [Task_aligned_Head]:
+            c1, c2 = ch[f], args[0]
+            c2 = make_divisible(c2 * gw, 8)
+            args = [c2, args[1],nc,args[2]]
         elif m in [Stem,ConvWrapper,Transpose]:
             c1 = ch[f]
             c2 = args[0]
@@ -75,8 +79,10 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
         elif m in [RepGhostBottleneck]:
             c1 = args[0]
             c2 = int(args[3] * args[5])
-        elif m in [Add_down]:
+        elif m in [Add_down, ELAN, ELAN_H, E_ELAN]:
             c2 = args[1]
+        elif m is MP1:
+            c2 = args[0]
         else:
             c2 = ch[f]
 
@@ -151,6 +157,11 @@ class Model(nn.Module):
 
     def forward(self, x, val_loss = False):
         export_mode = torch.onnx.is_in_onnx_export()
+        try:
+            self.build_type
+        except:
+            self.build_type = "office"
+
         if self.build_type == "yaml":
         ##############
             number_layer = 0

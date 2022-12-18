@@ -55,12 +55,12 @@ class ComputeLoss_SimOTA:
         num_classes = outputs[0].shape[-1] - 5
 
         outputs, outputs_origin, gt_bboxes_scale, xy_shifts, expanded_strides = self.get_outputs_and_grids(
-            outputs, self.strides, dtype, device)
-
+            outputs, self.strides, dtype, device)  # 将reg的四边还原到原图中去
+        #开始计算loss
         total_num_anchors = outputs.shape[1]
         bbox_preds = outputs[:, :, :4]  # [batch, n_anchors_all, 4]
         bbox_preds_org = outputs_origin[:, :, :4]  # [batch, n_anchors_all, 4]
-        obj_preds = outputs[:, :, 4].unsqueeze(-1)  # [batch, n_anchors_all, 1]
+        obj_preds = outputs[:, :, 4].unsqueeze(-1)  #unsqueeze 加一维度 # [batch, n_anchors_all, 1]
         cls_preds = outputs[:, :, 5:]  # [batch, n_anchors_all, n_cls]
 
         # targets
@@ -71,7 +71,7 @@ class ComputeLoss_SimOTA:
         max_len = max((len(l) for l in targets_list))
 
         targets = torch.from_numpy(np.array(list(map(lambda l:l + [[-1,0,0,0,0]]*(max_len - len(l)), targets_list)))[:,1:,:]).to(targets.device)
-        num_targets_list = (targets.sum(dim=2) > 0).sum(dim=1)  # number of objects
+        num_targets_list = (targets.sum(dim=2) > 0).sum(dim=1)  # number of objects 每张图片有多少框
 
         num_fg, num_gts = 0, 0
         cls_targets, reg_targets, l1_targets, obj_targets, fg_masks = [], [], [], [], []
@@ -87,12 +87,12 @@ class ComputeLoss_SimOTA:
                 fg_mask = outputs.new_zeros(total_num_anchors).bool()
             else:
 
-                gt_bboxes_per_image = targets[batch_idx, :num_gt, 1:5].mul_(gt_bboxes_scale)
-                gt_classes = targets[batch_idx, :num_gt, 0]
-                bboxes_preds_per_image = bbox_preds[batch_idx]
+                gt_bboxes_per_image = targets[batch_idx, :num_gt, 1:5].mul_(gt_bboxes_scale) # 得到每张图片的box
+                gt_classes = targets[batch_idx, :num_gt, 0] # 得到每张图片的真实分类
+                bboxes_preds_per_image = bbox_preds[batch_idx] # 得到每张图片的预测框
                 cls_preds_per_image = cls_preds[batch_idx]
                 obj_preds_per_image = obj_preds[batch_idx]
-
+######################### SimOTA标签匹配策略
                 try:
                     (
                         gt_matched_classes,
@@ -156,7 +156,7 @@ class ComputeLoss_SimOTA:
                     fg_mask = fg_mask.cuda()
                     pred_ious_this_matching = pred_ious_this_matching.cuda()
                     matched_gt_inds = matched_gt_inds.cuda()
-
+                ########标签匹配完毕
                 torch.cuda.empty_cache()
                 num_fg += num_fg_img
                 if num_fg_img > 0:
@@ -186,7 +186,7 @@ class ComputeLoss_SimOTA:
         fg_masks = torch.cat(fg_masks, 0)
 
         num_fg = max(num_fg, 1)
-        # loss
+        # 计算loss
         loss_iou += (self.iou_loss(bbox_preds.view(-1, 4)[fg_masks].T, reg_targets)).sum() / num_fg
         loss_l1 += (self.l1_loss(bbox_preds_org.view(-1, 4)[fg_masks], l1_targets)).sum() / num_fg
 
@@ -201,16 +201,16 @@ class ComputeLoss_SimOTA:
         batch_size = output.shape[0]
         hsize, wsize = output.shape[2:4]
         if grid.shape[2:4] != output.shape[2:4]:
-            yv, xv = torch.meshgrid([torch.arange(hsize), torch.arange(wsize)])
-            grid = torch.stack((xv, yv), 2).view(1, 1, hsize, wsize, 2).type(dtype).to(device)
+            yv, xv = torch.meshgrid([torch.arange(hsize), torch.arange(wsize)])  #用于生成网格坐标
+            grid = torch.stack((xv, yv), 2).view(1, 1, hsize, wsize, 2).type(dtype).to(device) # 1 1 80 80 2（x,y）
             self.grids[k] = grid
 
-        output = output.reshape(batch_size, self.n_anchors * hsize * wsize, -1)
+        output = output.reshape(batch_size, self.n_anchors * hsize * wsize, -1) # batch_size,80x80,class+4+1
         output_origin = output.clone()
         grid = grid.view(1, -1, 2)
 
-        output[..., :2] = (output[..., :2] + grid) * stride
-        output[..., 2:4] = torch.exp(output[..., 2:4]) * stride
+        output[..., :2] = (output[..., :2] + grid) * stride # 将前面两个值作为左上角坐标
+        output[..., 2:4] = torch.exp(output[..., 2:4]) * stride # 将后面两个值作为长和宽
 
         return output, output_origin, grid, hsize, wsize
 
@@ -225,7 +225,7 @@ class ComputeLoss_SimOTA:
                 output, k, strides[k], dtype, device)
 
             xy_shift = grid
-            expanded_stride = torch.full((1, grid.shape[1], 1), strides[k], dtype=grid.dtype, device=grid.device)
+            expanded_stride = torch.full((1, grid.shape[1], 1), strides[k], dtype=grid.dtype, device=grid.device) # 得到步长
 
             xy_shifts.append(xy_shift)
             expanded_strides.append(expanded_stride)
@@ -264,7 +264,7 @@ class ComputeLoss_SimOTA:
         xy_shifts,
         num_classes
     ):
-
+        # fg mask代表正样本的选择区间
         fg_mask, is_in_boxes_and_center = self.get_in_boxes_info(
             gt_bboxes_per_image,
             expanded_strides,
@@ -279,7 +279,7 @@ class ComputeLoss_SimOTA:
         num_in_boxes_anchor = bboxes_preds_per_image.shape[0]
 
         # cost
-        pair_wise_ious = pairwise_bbox_iou(gt_bboxes_per_image, bboxes_preds_per_image, box_format='xywh')
+        pair_wise_ious = pairwise_bbox_iou(gt_bboxes_per_image, bboxes_preds_per_image, box_format='xywh') # 计算iou
         pair_wise_ious_loss = -torch.log(pair_wise_ious + 1e-8)
 
         gt_cls_per_image = (
@@ -294,7 +294,7 @@ class ComputeLoss_SimOTA:
                 cls_preds_.float().sigmoid_().unsqueeze(0).repeat(num_gt, 1, 1)
                 * obj_preds_.float().sigmoid_().unsqueeze(0).repeat(num_gt, 1, 1)
             )
-            pair_wise_cls_loss = F.binary_cross_entropy(
+            pair_wise_cls_loss = F.binary_cross_entropy( #分类交叉熵
                 cls_preds_.sqrt_(), gt_cls_per_image, reduction="none"
             ).sum(-1)
         del cls_preds_, obj_preds_
@@ -324,20 +324,20 @@ class ComputeLoss_SimOTA:
 
     def get_in_boxes_info(
         self,
-        gt_bboxes_per_image,
+        gt_bboxes_per_image, #中心点坐标
         expanded_strides,
         xy_shifts,
         total_num_anchors,
         num_gt,
     ):
         expanded_strides_per_image = expanded_strides[0]
-        xy_shifts_per_image = xy_shifts[0] * expanded_strides_per_image
+        xy_shifts_per_image = xy_shifts[0] * expanded_strides_per_image  # x缩放比 = 真实图像的左上角xy坐标
         xy_centers_per_image = (
-            (xy_shifts_per_image + 0.5 * expanded_strides_per_image)
+            (xy_shifts_per_image + 0.5 * expanded_strides_per_image) # 每个格子的中心点坐标
             .unsqueeze(0)
             .repeat(num_gt, 1, 1)
         )  # [n_anchor, 2] -> [n_gt, n_anchor, 2]
-
+        #计算真实框的坐标 left top ，right bottom
         gt_bboxes_per_image_lt = (
             (gt_bboxes_per_image[:, 0:2] - 0.5 * gt_bboxes_per_image[:, 2:4])
             .unsqueeze(1)
@@ -348,7 +348,7 @@ class ComputeLoss_SimOTA:
             .unsqueeze(1)
             .repeat(1, total_num_anchors, 1)
         )  # [n_gt, 2] -> [n_gt, n_anchor, 2]
-
+        # 判断8400个格子有多少中心点落在真实框中
         b_lt = xy_centers_per_image - gt_bboxes_per_image_lt
         b_rb = gt_bboxes_per_image_rb - xy_centers_per_image
         bbox_deltas = torch.cat([b_lt, b_rb], 2)
@@ -356,36 +356,37 @@ class ComputeLoss_SimOTA:
         is_in_boxes = bbox_deltas.min(dim=-1).values > 0.0
         is_in_boxes_all = is_in_boxes.sum(dim=0) > 0
 
-        # in fixed center
+        # in fixed center 取真实框为中心，2.5为半径，长为5的正方形
         gt_bboxes_per_image_lt = (gt_bboxes_per_image[:, 0:2]).unsqueeze(1).repeat(
             1, total_num_anchors, 1
         ) - self.center_radius * expanded_strides_per_image.unsqueeze(0)
         gt_bboxes_per_image_rb = (gt_bboxes_per_image[:, 0:2]).unsqueeze(1).repeat(
             1, total_num_anchors, 1
         ) + self.center_radius * expanded_strides_per_image.unsqueeze(0)
-
+        # 判断8400个格子有多少中心点落在正方形中
         c_lt = xy_centers_per_image - gt_bboxes_per_image_lt
         c_rb = gt_bboxes_per_image_rb - xy_centers_per_image
         center_deltas = torch.cat([c_lt, c_rb], 2)
         is_in_centers = center_deltas.min(dim=-1).values > 0.0
         is_in_centers_all = is_in_centers.sum(dim=0) > 0
 
-        # in boxes and in centers
+        # in boxes and in centers 并集
         is_in_boxes_anchor = is_in_boxes_all | is_in_centers_all
 
-        is_in_boxes_and_center = (
+        is_in_boxes_and_center = ( # 交集
             is_in_boxes[:, is_in_boxes_anchor] & is_in_centers[:, is_in_boxes_anchor]
         )
         return is_in_boxes_anchor, is_in_boxes_and_center
 
+#pair_wise_ious 真实框和所有预测框的iou
     def dynamic_k_matching(self, cost, pair_wise_ious, gt_classes, num_gt, fg_mask):
         matching_matrix = torch.zeros_like(cost, dtype=torch.uint8)
         ious_in_boxes_matrix = pair_wise_ious
         n_candidate_k = min(10, ious_in_boxes_matrix.size(1))
-        topk_ious, _ = torch.topk(ious_in_boxes_matrix, n_candidate_k, dim=1)
-        dynamic_ks = torch.clamp(topk_ious.sum(1).int(), min=1)
+        topk_ious, _ = torch.topk(ious_in_boxes_matrix, n_candidate_k, dim=1) # 选取不多于10个候选框的iou
+        dynamic_ks = torch.clamp(topk_ious.sum(1).int(), min=1)  #真实框要选取的正样本个数
         dynamic_ks = dynamic_ks.tolist()
-
+        #计算cost 取cost前正样本个数的框
         for gt_idx in range(num_gt):
             _, pos_idx = torch.topk(
                 cost[gt_idx], k=dynamic_ks[gt_idx], largest=False
@@ -400,10 +401,10 @@ class ComputeLoss_SimOTA:
             matching_matrix[cost_argmin, anchor_matching_gt > 1] = 1
         fg_mask_inboxes = matching_matrix.sum(0) > 0
         num_fg = fg_mask_inboxes.sum().item()
-        fg_mask[fg_mask.clone()] = fg_mask_inboxes
-        matched_gt_inds = matching_matrix[:, fg_mask_inboxes].argmax(0)
-        gt_matched_classes = gt_classes[matched_gt_inds]
-
+        fg_mask[fg_mask.clone()] = fg_mask_inboxes # 8400中有多少为真正样本
+        matched_gt_inds = matching_matrix[:, fg_mask_inboxes].argmax(0) #每个正样本对应的真实框
+        gt_matched_classes = gt_classes[matched_gt_inds] # 每个正样本对应的真实框类别
+        # 每个正样本对应的iou
         pred_ious_this_matching = (matching_matrix * pair_wise_ious).sum(0)[
             fg_mask_inboxes
         ]

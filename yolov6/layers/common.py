@@ -18,6 +18,9 @@ from yolov6.layers.focal_transformer import FocalTransformer_block
 from yolov6.layers.BotNet import BotNet
 from models.Models.research import BoT3
 from models.common import C3,Add_down
+from yolov6.layers.RTMDet import CSPNeXtLayer, Head_RTM, ConvModule,DepthwiseSeparableConv
+from yolov6.layers.TAP import Task_aligned_Head
+from yolov6.layers.yolov7 import E_ELAN,ELAN_H,ELAN, SPPCSPC
 class SiLU(nn.Module):
     '''Activation of SiLU'''
     @staticmethod
@@ -27,7 +30,7 @@ class SiLU(nn.Module):
 
 class Conv(nn.Module):
     '''Normal Conv with SiLU activation'''
-    def __init__(self, in_channels, out_channels, kernel_size, stride, groups=1, bias=False):
+    def __init__(self, in_channels, out_channels, kernel_size = 1, stride = 1, groups=1, bias=False):
         super().__init__()
         padding = kernel_size // 2
         self.conv = nn.Conv2d(
@@ -473,33 +476,33 @@ class Bottleneck(nn.Module):
 
     def forward(self, x):
         return x + self.cv2(self.cv1(x)) if self.add else self.cv2(self.cv1(x))
-class E_ELAN(nn.Module):
-    # Spatial pyramid pooling layer used in YOLOv3-SPP
-    def __init__(self, c1, c2, n=1, k=2):
-        super(E_ELAN, self).__init__()
-        c_ = c1//2 # hidden channels
-
-        self.conv1 = Conv(c1,c_,1,1)
-        self.conv2 = Conv(c1,c_,1,1)
-        self.conv3 = Conv(c_, c_, 3, 1)
-        self.conv4 = Conv(c_, c_, 3, 1)
-        self.conv5 = Conv(c_, c_, 3, 1)
-        self.conv6 = Conv(c_, c_, 3, 1)
-        self.conv7 = Conv(c_, c_, 3, 1)
-        self.conv8 = Conv(c_, c_, 3, 1)
-        self.conv9 = Conv(c_ * 5, c2, 1, 1)
-    def forward(self, x):
-        x1 = self.conv1(x)
-        x2 = self.conv2(x)
-        x3 = self.conv3(x2)
-        x4 = self.conv4(x3)
-        x5 = self.conv5(x4)
-        x6 = self.conv6(x5)
-        x7 = self.conv7(x6)
-        x8 = self.conv8(x7)
-        x = torch.cat([x8, x6, x4, x2, x1], dim = 1)
-        x = self.conv9(x)
-        return x
+# class E_ELAN(nn.Module):
+#     # Spatial pyramid pooling layer used in YOLOv3-SPP
+#     def __init__(self, c1, c2, n=1, k=2):
+#         super(E_ELAN, self).__init__()
+#         c_ = c1//2 # hidden channels
+#
+#         self.conv1 = Conv(c1,c_,1,1)
+#         self.conv2 = Conv(c1,c_,1,1)
+#         self.conv3 = Conv(c_, c_, 3, 1)
+#         self.conv4 = Conv(c_, c_, 3, 1)
+#         self.conv5 = Conv(c_, c_, 3, 1)
+#         self.conv6 = Conv(c_, c_, 3, 1)
+#         self.conv7 = Conv(c_, c_, 3, 1)
+#         self.conv8 = Conv(c_, c_, 3, 1)
+#         self.conv9 = Conv(c_ * 5, c2, 1, 1)
+#     def forward(self, x):
+#         x1 = self.conv1(x)
+#         x2 = self.conv2(x)
+#         x3 = self.conv3(x2)
+#         x4 = self.conv4(x3)
+#         x5 = self.conv5(x4)
+#         x6 = self.conv6(x5)
+#         x7 = self.conv7(x6)
+#         x8 = self.conv8(x7)
+#         x = torch.cat([x8, x6, x4, x2, x1], dim = 1)
+#         x = self.conv9(x)
+#         return x
 class MP(nn.Module):
     def __init__(self, k=2):
         super(MP, self).__init__()
@@ -556,17 +559,18 @@ class Stem(nn.Module):
         return x
 import math
 class Head_layers(nn.Module):
-    def __init__(self,in_channels,reg_max = 16,num_classes = 3, num_anchors = 1):
+    def __init__(self,in_channels,out_channels,reg_max = 16,num_classes = 3, num_anchors = 1):
         super(Head_layers, self).__init__()
-        self.stem = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=1, stride=1)
+
+        self.stem = Conv(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=1)
         # cls_conv0
-        self.cls_conv = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=1)
+        self.cls_conv = Conv(in_channels=out_channels, out_channels=out_channels, kernel_size=3, stride=1)
         # reg_conv0
-        self.reg_conv = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=1)
+        self.reg_conv = Conv(in_channels=out_channels, out_channels=out_channels, kernel_size=3, stride=1)
         # cls_pred0
-        self.cls_pred = nn.Conv2d(in_channels=in_channels, out_channels=num_classes * num_anchors, kernel_size=1)
+        self.cls_pred = nn.Conv2d(in_channels=out_channels, out_channels=num_classes * num_anchors, kernel_size=1)
         # reg_pred0
-        self.reg_pred = nn.Conv2d(in_channels=in_channels, out_channels=4 * (reg_max + num_anchors), kernel_size=1)
+        self.reg_pred = nn.Conv2d(in_channels=out_channels, out_channels=4 * (reg_max + num_anchors), kernel_size=1)
         self.prior_prob = 1e-2
         self.initialize_biases()
     def initialize_biases(self):
@@ -1426,6 +1430,8 @@ class BotRep(nn.Module):
         outputs = self.botAttention(x)
         outputs = self.conv2(outputs)
         return outputs + self.alpha * x if self.shortcut else outputs
+
+
 def get_block(mode):
     if mode == 'repvgg':
         return RepVGGBlock
