@@ -2,7 +2,7 @@
 初衷让 `YOLOv6` 更换网络结构更为便捷 <br><br>
 基于官方 `YOLOv6` 的整体架构，使用 `YOLOv5` 的网络构建方式构建一个 `YOLOv6` 网络，包括 `backbone`，`neck`，`effidehead` 结构 <br><br>
 可以在 `yaml` 文件中任意修改或添加模块，并且每个修改的文件都是独立可运行的，目的是为了助力科研 <br><br>
-后续会基于 `yolov5` 和 `yoloair` 中的模块加入更多的网络结构改进 <br><br>
+后续会基于 `yolov5` 和 `yoloair` 中的模块加入更多的网络结构改进，有问题或者是改进意见都可以随时在 issues 中提出呀<br><br>
 预训练权重已经从官方权重转换，确保可以匹配 <br><br>
 我们使用的 `yoloair` 和 `YOLOv6 pro` 框架在 IEEE UV 2022 "Vision Meets Alage" 目标检测竞赛中取得第一名！<br><br>
 博客介绍地址：<br>
