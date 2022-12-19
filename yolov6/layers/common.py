@@ -18,7 +18,7 @@ from yolov6.layers.focal_transformer import FocalTransformer_block
 from yolov6.layers.BotNet import BotNet
 from models.Models.research import BoT3
 from models.common import C3,Add_down
-from yolov6.layers.RTMDet import CSPNeXtLayer, Head_RTM, ConvModule,DepthwiseSeparableConv
+from yolov6.layers.RTMDet import CSPNeXtLayer, RTM_SepBNHead, ConvModule,DepthwiseSeparableConv
 from yolov6.layers.TAP import Task_aligned_Head
 from yolov6.layers.yolov7 import E_ELAN,ELAN_H,ELAN, SPPCSPC
 class SiLU(nn.Module):
@@ -604,19 +604,19 @@ class Head_layers(nn.Module):
         return x, cls_output, reg_output
 
 class Head_simota(nn.Module):
-    def __init__(self,in_channels,reg_max = 16,num_classes = 3, num_anchors = 1):
+    def __init__(self,in_channels,out_channels, reg_max = 16,num_classes = 3, num_anchors = 1):
         super(Head_simota, self).__init__()
-        self.stem = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=1, stride=1)
+        self.stem = Conv(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=1)
         # cls_conv0
-        self.cls_conv = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=1)
+        self.cls_conv = Conv(in_channels=out_channels, out_channels=out_channels, kernel_size=3, stride=1)
         # reg_conv0
-        self.reg_conv = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=1)
+        self.reg_conv = Conv(in_channels=out_channels, out_channels=out_channels, kernel_size=3, stride=1)
         # cls_pred0
-        self.cls_pred = nn.Conv2d(in_channels=in_channels, out_channels=num_classes * num_anchors, kernel_size=1)
+        self.cls_pred = nn.Conv2d(in_channels=out_channels, out_channels=num_classes * num_anchors, kernel_size=1)
         # reg_pred0
-        self.reg_pred = nn.Conv2d(in_channels=in_channels, out_channels=4 * (reg_max + num_anchors), kernel_size=1)
+        self.reg_pred = nn.Conv2d(in_channels=out_channels, out_channels=4 * (reg_max + num_anchors), kernel_size=1)
 
-        self.obj_pred = nn.Conv2d(in_channels=in_channels, out_channels=1 * (num_anchors), kernel_size=1)
+        self.obj_pred = nn.Conv2d(in_channels=out_channels, out_channels=1 * (num_anchors), kernel_size=1)
         self.prior_prob = 1e-2
         self.initialize_biases()
     def initialize_biases(self):
@@ -642,17 +642,17 @@ class Head_simota(nn.Module):
 
         return cls_output, reg_output, obj_pred
 class Head_out(nn.Module):
-    def __init__(self,in_channels,reg_max = 16,num_classes = 3, num_anchors = 1):
+    def __init__(self,in_channels,out_channels,reg_max = 16,num_classes = 3, num_anchors = 1):
         super(Head_out, self).__init__()
-        self.stem = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=1, stride=1)
+        self.stem = Conv(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=1)
         # cls_conv0
-        self.cls_conv = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=1)
+        self.cls_conv = Conv(in_channels=out_channels, out_channels=out_channels, kernel_size=3, stride=1)
         # reg_conv0
-        self.reg_conv = Conv(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=1)
+        self.reg_conv = Conv(in_channels=out_channels, out_channels=out_channels, kernel_size=3, stride=1)
         # cls_pred0
-        self.cls_pred = nn.Conv2d(in_channels=in_channels, out_channels=num_classes * num_anchors, kernel_size=1)
+        self.cls_pred = nn.Conv2d(in_channels=out_channels, out_channels=num_classes * num_anchors, kernel_size=1)
         # reg_pred0
-        self.reg_pred = nn.Conv2d(in_channels=in_channels, out_channels=4 * (reg_max + num_anchors), kernel_size=1)
+        self.reg_pred = nn.Conv2d(in_channels=out_channels, out_channels=4 * (reg_max + num_anchors), kernel_size=1)
         self.prior_prob = 1e-2
         self.initialize_biases()
     def initialize_biases(self):

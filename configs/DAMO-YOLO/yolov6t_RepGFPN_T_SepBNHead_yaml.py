@@ -2,9 +2,9 @@
 model = dict(
     type='YOLOv6t_yaml',
     # pretrained='yolov6l_yaml.pt',
-    pretrained=None,  #only backbone
+    pretrained=False,  #only backbone
     build_type = 'yaml',
-    yaml_file = 'configs/DAMO-YOLO/yaml/yolov6t_RepGFPN_T.yaml',
+    yaml_file = 'configs/DAMO-YOLO/yaml/yolov6t_RepGFPN_T_SepBNHead.yaml',
     depth_multiple=0.33,
     width_multiple=0.375,
     head=dict(

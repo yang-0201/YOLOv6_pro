@@ -4,19 +4,20 @@ model = dict(
     # pretrained='yolov6l_yaml.pt',
     pretrained=None,  #only backbone
     build_type = 'yaml',
-    yaml_file = 'configs/DAMO-YOLO/yaml/yolov6t_RepGFPN_T.yaml',
+    yaml_file = 'configs/DAMO-YOLO/yaml/yolov6s_RepGFPN_T.yaml',
     depth_multiple=0.33,
-    width_multiple=0.375,
+    width_multiple=0.50,
     head=dict(
         type='EffiDeHead',
         num_layers=3,
         anchors=1,
         strides=[8, 16, 32],
-        iou_type='siou',
+        iou_type='giou',
         use_dfl=False,
         reg_max=0  # if use_dfl is False, please set reg_max to 0
     )
 )
+
 
 solver = dict(
     optim='SGD',

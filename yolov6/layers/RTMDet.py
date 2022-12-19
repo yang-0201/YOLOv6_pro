@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from timm.models.layers import create_conv2d, DropPath, get_norm_act_layer
-
+import numpy as np
 def num_groups(group_size, channels):
     if not group_size:  # 0 or None
         return 1  # normal conv with 1 group
@@ -151,54 +151,109 @@ class CSPNeXtLayer(nn.Module):
             x_final = self.attention(x_final)
         return self.final_conv(x_final)
 import math
-class Head_RTM(nn.Module):
-    def __init__(self,in_channels,reg_max = 16,num_classes = 3, num_anchors = 1):
-        super(Head_RTM, self).__init__()
+# RTMDetHead with separated BN layers and shared conv layers.
+class RTM_SepBNHead(nn.Module):
+    def __init__(self,in_channels,out_channels,reg_max = 16,num_classes = 3, stage = 3,stacked_convs_number = 2, num_anchors = 1,share_conv = True):
+        super(RTM_SepBNHead, self).__init__()
+        self.cls_convs = nn.ModuleList()
+        self.reg_convs = nn.ModuleList()
+        self.rtm_cls = nn.ModuleList()
+        self.rtm_reg = nn.ModuleList()
+        self.stage = stage
+        self.stacked_convs_number = stacked_convs_number
 
-        # self.stem = ConvModule(c1=in_channels, c2=out_channels, k=3, s=1)
-        # cls_conv
-        self.cls_conv1 = ConvModule(c1=in_channels, c2=in_channels, k=3, s=1)
-        self.cls_conv2 = ConvModule(c1=in_channels, c2=in_channels, k=3, s=1)
-        # reg_conv
-        self.reg_conv1 = ConvModule(c1=in_channels, c2=in_channels, k=3, s=1)
-        self.reg_conv2 = ConvModule(c1=in_channels, c2=in_channels, k=3, s=1)
-        # cls_pred
-        self.cls_pred = nn.Conv2d(in_channels=in_channels, out_channels=num_classes * num_anchors, kernel_size=1)
-        # reg_pred0
-        self.reg_pred = nn.Conv2d(in_channels=in_channels, out_channels=4 * (reg_max + num_anchors), kernel_size=1)
-        self.prior_prob = 1e-2
+        for n in range(self.stage):
+            cls_convs = nn.ModuleList()
+            reg_convs = nn.ModuleList()
+            for i in range(self.stacked_convs_number):
+                chn = in_channels[n] if i == 0 else out_channels[i]
+                cls_convs.append(
+                    ConvModule(
+                        chn,
+                        out_channels[n],
+                        3,
+                        s=1,
+                        p=1 ))
+                reg_convs.append(
+                    ConvModule(
+                        chn,
+                        out_channels[n],
+                        3,
+                        s=1,
+                        p=1))
+            self.cls_convs.append(cls_convs)
+            self.reg_convs.append(reg_convs)
+            self.rtm_cls.append(
+                nn.Conv2d(
+                    out_channels[n],
+                    num_classes * num_anchors,
+                    1,
+                    padding=0))
+            self.rtm_reg.append(
+                nn.Conv2d(
+                    out_channels[n],
+                    4 * (reg_max + num_anchors),
+                    1,
+                    padding=0))
+        if share_conv:
+            for n in range(stage):
+                for i in range(self.stacked_convs_number):
+                    self.cls_convs[n][i].conv = self.cls_convs[0][i].conv
+                    self.reg_convs[n][i].conv = self.reg_convs[0][i].conv
         self.initialize_biases()
 
-    def initialize_biases(self):
+
+    def  initialize_biases(self):
 
 
-        b = self.cls_pred.bias.view(-1, )
-        b.data.fill_(-math.log((1 - self.prior_prob) / self.prior_prob))
-        self.cls_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
-        w = self.cls_pred.weight
-        w.data.fill_(0.)
-        self.cls_pred.weight = torch.nn.Parameter(w, requires_grad=True)
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                normal_init(m, mean=0, std=0.01)
+            if isinstance(m,ConvModule):
+                constant_init(m.bn, 1)
+        bias_cls = bias_init_with_prob(0.01)
+        for rtm_cls, rtm_reg in zip(self.rtm_cls, self.rtm_reg):
+            normal_init(rtm_cls, std=0.01, bias=bias_cls)
+            normal_init(rtm_reg, std=0.01)
 
+    def forward(self,feats):
+        cls_scores = []
+        bbox_preds = []
+        outputs = []
+        for idx, x in enumerate(feats):
+            cls_feat = x
+            reg_feat = x
 
-        b = self.reg_pred.bias.view(-1, )
-        b.data.fill_(1.0)
-        self.reg_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
-        w = self.reg_pred.weight
-        w.data.fill_(0.)
-        self.reg_pred.weight = torch.nn.Parameter(w, requires_grad=True)
+            for cls_layer in self.cls_convs[idx]:
+                cls_feat = cls_layer(cls_feat)
+            cls_score = self.rtm_cls[idx](cls_feat)
 
-    def forward(self,x):
-        # x = self.stem(x)
-        cls_x = x
-        reg_x = x
-        cls_feat = self.cls_conv1(cls_x)
-        cls_feat = self.cls_conv2(cls_feat)
-        cls_output = self.cls_pred(cls_feat)
+            for reg_layer in self.reg_convs[idx]:
+                reg_feat = reg_layer(reg_feat)
 
-        cls_output = torch.sigmoid(cls_output)  ######
+            #reg_dist = self.rtm_reg[idx](reg_feat).exp() * stride[0]
+            reg_dist = self.rtm_reg[idx](reg_feat)
+            cls_scores.append(cls_score)
+            bbox_preds.append(reg_dist)
+            cls_score = torch.sigmoid(cls_score)
+            output = [feats[idx],cls_score,reg_dist]
+            outputs.append(output)
 
-        reg_feat = self.reg_conv1(reg_x)
-        reg_feat = self.reg_conv2(reg_feat)
-        reg_output = self.reg_pred(reg_feat)
+        return outputs
 
-        return x, cls_output, reg_output
+def normal_init(module, mean=0, std=1, bias=0):
+    if hasattr(module, 'weight') and module.weight is not None:
+        nn.init.normal_(module.weight, mean, std)
+    if hasattr(module, 'bias') and module.bias is not None:
+        nn.init.constant_(module.bias, bias)
+
+def constant_init(module, val, bias=0):
+    if hasattr(module, 'weight') and module.weight is not None:
+        nn.init.constant_(module.weight, val)
+    if hasattr(module, 'bias') and module.bias is not None:
+        nn.init.constant_(module.bias, bias)
+
+def bias_init_with_prob(prior_prob):
+    """initialize conv/fc bias value according to a given probability value."""
+    bias_init = float(-np.log((1 - prior_prob) / prior_prob))
+    return bias_init
