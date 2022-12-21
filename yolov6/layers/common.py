@@ -603,6 +603,52 @@ class Head_layers(nn.Module):
 
         return x, cls_output, reg_output
 
+class Head_Depth(nn.Module):
+    def __init__(self,in_channels,out_channels,reg_max = 16,num_classes = 3, num_anchors = 1):
+        super(Head_Depth, self).__init__()
+
+        self.stem = Conv(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=1)
+        # cls_conv0
+        self.cls_conv = DepthwiseSeparableConv(in_chs=out_channels, out_chs=out_channels, dw_kernel_size=5, stride=1)
+        # reg_conv0
+        self.reg_conv = DepthwiseSeparableConv(in_chs=out_channels, out_chs=out_channels, dw_kernel_size=5, stride=1)
+        # cls_pred0
+        self.cls_pred = nn.Conv2d(in_channels=out_channels, out_channels=num_classes * num_anchors, kernel_size=1)
+        # reg_pred0
+        self.reg_pred = nn.Conv2d(in_channels=out_channels, out_channels=4 * (reg_max + num_anchors), kernel_size=1)
+        self.prior_prob = 1e-2
+        self.initialize_biases()
+    def initialize_biases(self):
+
+
+        b = self.cls_pred.bias.view(-1, )
+        b.data.fill_(-math.log((1 - self.prior_prob) / self.prior_prob))
+        self.cls_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+        w = self.cls_pred.weight
+        w.data.fill_(0.)
+        self.cls_pred.weight = torch.nn.Parameter(w, requires_grad=True)
+
+
+        b = self.reg_pred.bias.view(-1, )
+        b.data.fill_(1.0)
+        self.reg_pred.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+        w = self.reg_pred.weight
+        w.data.fill_(0.)
+        self.reg_pred.weight = torch.nn.Parameter(w, requires_grad=True)
+
+    def forward(self,x):
+        x = self.stem(x)
+        cls_x = x
+        reg_x = x
+        cls_feat = self.cls_conv(cls_x)
+        cls_output = self.cls_pred(cls_feat)
+        cls_output = torch.sigmoid(cls_output)
+        reg_feat = self.reg_conv(reg_x)
+        reg_output = self.reg_pred(reg_feat)
+
+        return x, cls_output, reg_output
+
+
 class Head_simota(nn.Module):
     def __init__(self,in_channels,out_channels, reg_max = 16,num_classes = 3, num_anchors = 1):
         super(Head_simota, self).__init__()

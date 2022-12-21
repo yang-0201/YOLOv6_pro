@@ -1,0 +1,52 @@
+depth_multiple: 0.33  # model depth multiple
+width_multiple: 0.375  # layer channel multiple
+backbone:
+  # [from, number, module, args]
+  [[-1, 1, RepVGGBlock, [64, 3, 2]],  # 0-P1/2
+   [-1, 1, RepVGGBlock, [128, 3, 2]],  # 1-P2/4
+   [-1, 6, RepBlock, [128]],
+   [-1, 1, RepVGGBlock, [256, 3, 2]],  # 3-P3/8
+   [-1, 12, RepBlock, [256]],
+   [-1, 1, RepVGGBlock, [512, 3, 2]],  # 5-P4/16
+   [-1, 18, RepBlock, [512]],
+   [-1, 1, RepVGGBlock, [1024, 3, 2]],  # 7-P5/32
+   [-1, 6, RepBlock, [1024]],
+   [-1, 1, SimSPPF, [1024, 5]]]  # 9
+neck:
+   [
+    [ 6, 1,ConvBNAct,[ 192, 3, 2 ] ],
+    [ [ -1, 9 ], 1, Concat, [ 1 ] ], # 576
+    [ -1, 1, RepGFPN, [ 384, 1.0, 1.0 ] ],  #  12
+
+    [ -1, 1, nn.Upsample, [ None, 2, 'nearest' ] ],
+    [ 4, 1,ConvBNAct,[ 96, 3, 2 ] ],
+    [ [ -1, 6, 13 ], 1, Concat, [ 1 ] ], # 672
+    [ -1, 1, RepGFPN, [ 192, 1.0, 1.0 ] ], # merge_4 16
+
+    [ -1, 1, nn.Upsample, [ None, 2, 'nearest' ] ],
+    [ [ -1, 4 ], 1, Concat, [ 1 ] ], # 288
+    [ -1, 1, RepGFPN, [ 96, 1.0, 1.0 ] ], #  merge_5  19
+
+##### more
+    [[-1, 17], 1, Concat,[1]],
+    [ -1, 1, RepGFPN, [ 64, 1.0, 1.0 ] ], #  merge_5  21  out
+    [ -1, 1,ConvBNAct,[ 64, 3, 2 ] ],
+#####
+
+    [ 19, 1,ConvBNAct,[ 64, 3, 2 ] ],
+    [ [ -1, 16, -2 ], 1, Concat, [ 1 ] ], # 256
+    [ -1, 1, RepGFPN, [ 128, 1.0, 1.0 ] ], #   merge_7  25  out
+
+    [ 16, 1,ConvBNAct,[ 192, 3, 2 ] ],
+    [ -2, 1,ConvBNAct,[ 128, 3, 2 ] ],
+    [ [ -1, 12, -2 ], 1, Concat, [ 1 ] ], # 704
+    [ -1, 1, RepGFPN, [ 256, 1.0, 1.0 ] ], #  merge_6 29  out
+   ]
+
+effidehead:
+  [[21, 1,Head_out , [170, 0]],  ##170 * 0.375 = 64
+  [25, 1, Head_out, [341, 0]],   ##341 * 0.375 = 128
+  [29, 1, Head_out, [682, 0]],   ##682 * 0.375 = 256
+  [[30, 31, 32], 1, Out, []]]
+
+

@@ -255,17 +255,17 @@ def model_info(model, verbose=False, img_size=640, cfg = None):
     # print('flops: ', flops, 'params: ', params)
 
 
-    from tools.get_flops import get_model_complexity_info
-    get_model_complexity_info
-    input_shape = (3, 640, 640)
-    flops, params = get_model_complexity_info(model, (3, 640, 640))
-    split_line = '=' * 30
-
-    print(f'{split_line}\nInput shape: {input_shape}\n'
-          f'Flops: {flops}\nParams: {params}\n{split_line}')
-    print('!!!Please be cautious if you use the results in papers. '
-          'You may need to check if all ops are supported and verify that the '
-          'flops computation is correct.')
+    # from tools.get_flops import get_model_complexity_info
+    # get_model_complexity_info
+    # input_shape = (3, 640, 640)
+    # flops, params = get_model_complexity_info(model, (3, 640, 640))
+    # split_line = '=' * 30
+    #
+    # print(f'{split_line}\nInput shape: {input_shape}\n'
+    #       f'Flops: {flops}\nParams: {params}\n{split_line}')
+    # print('!!!Please be cautious if you use the results in papers. '
+    #       'You may need to check if all ops are supported and verify that the '
+    #       'flops computation is correct.')
 
     LOGGER.info(f"Model Summary: {len(list(model.modules()))} layers, {n_p} parameters, {n_g} gradients{fs}")
 

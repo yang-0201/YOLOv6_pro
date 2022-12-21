@@ -39,7 +39,7 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
             c2 = sum(ch[x] for x in f)
         elif m in [Out]:
             pass
-        elif m in [Head_layers, Head_out, Head_simota]:
+        elif m in [Head_layers, Head_out, Head_simota, Head_Depth]:
             c1, c2 = ch[f], args[0]
             c2 = make_divisible(c2 * gw, 8)
             args = [c1,c2, args[1],nc]
