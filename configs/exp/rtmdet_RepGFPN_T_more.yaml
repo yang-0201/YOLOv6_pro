@@ -1,14 +1,14 @@
 depth_multiple: 1  # model depth multiple
-width_multiple: 0.375  # layer channel multiple
+width_multiple: 0.5  # layer channel multiple
 backbone:
   # [from, number, module, args]
   [[-1, 1, RepVGGBlock, [64, 3, 2]],  # 0-P1/2
    [-1, 1, RepVGGBlock, [128, 3, 2]],  # 1-P2/4
    [-1, 1, CSPNeXtLayer, [128]],
    [-1, 1, RepVGGBlock, [256, 3, 2]],  # 3-P3/8
-   [-1, 1, CSPNeXtLayer, [256]],
+   [-1, 2, CSPNeXtLayer, [256]],
    [-1, 1, RepVGGBlock, [512, 3, 2]],  # 5-P4/16
-   [-1, 1, CSPNeXtLayer, [512]],
+   [-1, 2, CSPNeXtLayer, [512]],
    [-1, 1, RepVGGBlock, [1024, 3, 2]],  # 7-P5/32
    [-1, 1, CSPNeXtLayer, [1024]],
    [-1, 1, SimSPPF, [1024, 5]]]  # 9
@@ -44,9 +44,9 @@ neck:
    ]
 
 effidehead:
-  [[21, 1,Head_Depth , [170, 0]],  ##170 * 0.375 = 64
-  [25, 1, Head_Depth, [341, 0]],   ##341 * 0.375 = 128
-  [29, 1, Head_Depth, [682, 0]],   ##682 * 0.375 = 256
+  [[21, 1,Head_Depth , [128, 0]],  ##170 * 0.375 = 64
+  [25, 1, Head_Depth, [256, 0]],   ##341 * 0.375 = 128
+  [29, 1, Head_Depth, [512, 0]],   ##682 * 0.375 = 256
   [[30, 31, 32], 1, Out, []]]
 
 

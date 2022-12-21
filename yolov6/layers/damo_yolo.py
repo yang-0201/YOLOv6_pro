@@ -384,7 +384,7 @@ class BasicBlock_3x3_Reverse(nn.Module):
         self.conv1 = ConvBNAct(ch_hidden, ch_out, 3, stride=1, act=act)
         if use_depthwise:
             from yolov6.layers.RTMDet import DepthwiseSeparableConv
-            self.conv1 = DepthwiseSeparableConv(ch_hidden, ch_out, 5, stride=1, act=act)
+            self.conv1 = DepthwiseSeparableConv(ch_hidden, ch_out, 5, stride=1)
 
         self.conv2 = RepConv(ch_in, ch_hidden, 3, stride=1, act=act)
         self.shortcut = shortcut
