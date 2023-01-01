@@ -214,3 +214,12 @@ step5: 运行训练命令<br>
 * [https://github.com/meituan/YOLOv6](https://github.com/meituan/YOLOv6)
 * [https://github.com/ultralytics/yolov5](https://github.com/ultralytics/yolov5)
 * [https://github.com/iscyy/yoloair](https://github.com/iscyy/yoloair)
+### Cite
+```shell
+@article{li2022yolov6,
+  title={YOLOv6: A single-stage object detection framework for industrial applications},
+  author={Li, Chuyi and Li, Lulu and Jiang, Hongliang and Weng, Kaiheng and Geng, Yifei and Li, Liang and Ke, Zaidan and Li, Qingyuan and Cheng, Meng and Nie, Weiqiang and others},
+  journal={arXiv preprint arXiv:2209.02976},
+  year={2022}
+}
+```
