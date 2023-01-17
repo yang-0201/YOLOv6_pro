@@ -23,7 +23,7 @@ from yolov6.utils.general import increment_name, find_latest_checkpoint
 
 def get_args_parser(add_help=True):
     parser = argparse.ArgumentParser(description='YOLOv6 PyTorch Training', add_help=add_help)
-    parser.add_argument('--data-path', default='./data/car.yaml', type=str, help='path of dataset')
+    parser.add_argument('--data-path', default='./data/coco.yaml', type=str, help='path of dataset')
     parser.add_argument('--conf-file', default='./configs/yolov6n.py', type=str, help='experiments description file')
     parser.add_argument('--img-size', default=640, type=int, help='train, val image size (pixels)')
     parser.add_argument('--batch-size', default=4, type=int, help='total batch size for all GPUs')
@@ -57,6 +57,7 @@ def get_args_parser(add_help=True):
     parser.add_argument('--not_infer_on_rect', action='store_true', help='do not use rect to and pad for eval after train epoch')
     parser.add_argument('--do_pr_metric', action='store_true', help='do pr metric for eval after train epoch')
     parser.add_argument('--simota', action='store_true', help='SimOTA target')
+    parser.add_argument('--fuse_ab', action='store_true', help='fuse ab branch in training process or not')
     return parser
 
 

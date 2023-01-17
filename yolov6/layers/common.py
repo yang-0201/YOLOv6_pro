@@ -1478,6 +1478,121 @@ class BotRep(nn.Module):
         return outputs + self.alpha * x if self.shortcut else outputs
 
 
+class SimCSPSPPF(nn.Module):
+    # CSP https://github.com/WongKinYiu/CrossStagePartialNetworks
+    def __init__(self, in_channels, out_channels, kernel_size=5, e=0.5):
+        super(SimCSPSPPF, self).__init__()
+        c_ = int(out_channels * e)  # hidden channels
+        self.cv1 = SimConv(in_channels, c_, 1, 1)
+        self.cv2 = SimConv(in_channels, c_, 1, 1)
+        self.cv3 = SimConv(c_, c_, 3, 1)
+        self.cv4 = SimConv(c_, c_, 1, 1)
+
+        self.m = nn.MaxPool2d(kernel_size=kernel_size, stride=1, padding=kernel_size // 2)
+        self.cv5 = SimConv(4 * c_, c_, 1, 1)
+        self.cv6 = SimConv(c_, c_, 3, 1)
+        self.cv7 = SimConv(2 * c_, out_channels, 1, 1)
+
+    def forward(self, x):
+        x1 = self.cv4(self.cv3(self.cv1(x)))
+        y0 = self.cv2(x)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            y1 = self.m(x1)
+            y2 = self.m(y1)
+            y3 = self.cv6(self.cv5(torch.cat([x1, y1, y2, self.m(y2)], 1)))
+        return self.cv7(torch.cat((y0, y3), dim=1))
+class Head_layers_fuseab(nn.Module):
+    def __init__(self,in_channels,out_channels,reg_max = 16,num_classes = 3, num_anchors = 3):
+        super(Head_layers_fuseab, self).__init__()
+        self.num_anchor = num_anchors
+        self.stem = Conv(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=1)
+        # cls_conv0
+        self.cls_conv = Conv(in_channels=out_channels, out_channels=out_channels, kernel_size=3, stride=1)
+        # reg_conv0
+        self.reg_conv = Conv(in_channels=out_channels, out_channels=out_channels, kernel_size=3, stride=1)
+        # cls_pred_anchor_free
+        self.cls_pred_free = nn.Conv2d(in_channels=out_channels, out_channels=num_classes, kernel_size=1)
+        # reg_pred_anchor_free
+        self.reg_pred_free = nn.Conv2d(in_channels=out_channels, out_channels=4 * (reg_max + 1), kernel_size=1)
+
+        # cls_pred_anchor_base_3
+        self.cls_pred_base = nn.Conv2d(in_channels=out_channels, out_channels=num_classes * num_anchors, kernel_size=1)
+        # reg_pred_anchor_base_3
+        self.reg_pred_base = nn.Conv2d(in_channels=out_channels, out_channels=4 * num_anchors, kernel_size=1)
+        self.prior_prob = 1e-2
+        self.initialize_biases()
+    def initialize_biases(self):
+
+        b = self.cls_pred_free.bias.view(-1, )
+        b.data.fill_(-math.log((1 - self.prior_prob) / self.prior_prob))
+        self.cls_pred_free.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+        w = self.cls_pred_free.weight
+        w.data.fill_(0.)
+        self.cls_pred_free.weight = torch.nn.Parameter(w, requires_grad=True)
+
+        b = self.cls_pred_base.bias.view(-1, )
+        b.data.fill_(-math.log((1 - self.prior_prob) / self.prior_prob))
+        self.cls_pred_base.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+        w = self.cls_pred_base.weight
+        w.data.fill_(0.)
+        self.cls_pred_base.weight = torch.nn.Parameter(w, requires_grad=True)
+
+
+        b = self.reg_pred_free.bias.view(-1, )
+        b.data.fill_(1.0)
+        self.reg_pred_free.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+        w = self.reg_pred_free.weight
+        w.data.fill_(0.)
+        self.reg_pred_free.weight = torch.nn.Parameter(w, requires_grad=True)
+
+        b = self.reg_pred_base.bias.view(-1, )
+        b.data.fill_(1.0)
+        self.reg_pred_base.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+        w = self.reg_pred_base.weight
+        w.data.fill_(0.)
+        self.reg_pred_base.weight = torch.nn.Parameter(w, requires_grad=True)
+
+    def forward(self,x):
+        b, _, h, w = x.shape
+        l = h * w
+        device = x.device
+        x = self.stem(x)
+        cls_x = x
+        reg_x = x
+        cls_feat = self.cls_conv(cls_x)
+        reg_feat = self.reg_conv(reg_x)
+        # anchor_base
+        cls_output_ab = self.cls_pred_base(cls_feat)
+        reg_output_ab = self.reg_pred_base(reg_feat)
+
+        # anchor_free
+        cls_output_af = self.cls_pred_free(cls_feat)
+        reg_output_af = self.reg_pred_free(reg_feat)
+
+
+        return x, cls_output_ab, reg_output_ab,cls_output_af,reg_output_af
+class BIC(nn.Module):
+    def __init__(self, c1, c2):
+        c_ = c1  * 2
+        super(BIC, self).__init__()
+        self.up1 = Transpose(c1, c1)
+        self.conv2 = SimConv(c_, c1, 1, 1)
+        self.conv3_1 = SimConv(c1, c1, 1, 1)
+        self.conv3_2 = SimConv(c1, c1, 3, 2)
+        self.conv4 = SimConv(3 * c1, c2, 1, 1)
+    def forward(self, x):
+        x1 = x[0]
+        x2 = x[1]
+        x3 = x[2]
+        x1 = self.up1(x1)
+        x2 = self.conv2(x2)
+        x3 = self.conv3_1(x3)
+        x3 = self.conv3_2(x3)
+        x = torch.cat([x1, x2, x3], 1)
+        x = self.conv4(x)
+        return x
+
 def get_block(mode):
     if mode == 'repvgg':
         return RepVGGBlock

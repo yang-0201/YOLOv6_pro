@@ -25,7 +25,7 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
                 pass
 
         n = n_  = max(round(n * gd), 1) if n > 1 else n  # depth gain
-        if m in [Conv_C3,Bottleneck, SPPF,C3,RepBlock,SimConv,RepVGGBlock,Transpose,SimSPPF,SPPCSPC,BepC3, BepBotC3, CSPNeXtLayer, ConvModule, Conv]:
+        if m in [Conv_C3,Bottleneck, SPPF,C3,RepBlock,SimConv,RepVGGBlock,Transpose,SimSPPF,SPPCSPC,BepC3, BepBotC3, CSPNeXtLayer, ConvModule, Conv, SimCSPSPPF]:
             c1, c2 = ch[f], args[0]
             c2 = make_divisible(c2 * gw, 8)
 
@@ -33,13 +33,19 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
             if m in [C3, RepBlock, CSPNeXtLayer]:
                 args.insert(2, n)  # number of repeats
                 n = 1
+        elif m in [BIC]:
+            c1, c2 = args[0], args[1]
+            c1 = make_divisible(c2 * gw, 8)
+            c2 = make_divisible(c2 * gw, 8)
+            args = [c1, c2]
+
         elif m is nn.BatchNorm2d:
             args = [ch[f]]
         elif m is Concat:
             c2 = sum(ch[x] for x in f)
         elif m in [Out]:
             pass
-        elif m in [Head_layers, Head_out, Head_simota, Head_Depth]:
+        elif m in [Head_layers, Head_out, Head_simota, Head_Depth,Head_layers_fuseab]:
             c1, c2 = ch[f], args[0]
             c2 = make_divisible(c2 * gw, 8)
             args = [c1,c2, args[1],nc]
@@ -85,7 +91,9 @@ def parse_model(d, ch = 3,nc = 0):  # model_dict, input_channels(3)
         elif m in [Add_down, ELAN, ELAN_H, E_ELAN]:
             c2 = args[1]
         elif m is MP1:
+            c1 = ch[f]
             c2 = args[0]
+            args = [c1, c2, *args[1:]]
         else:
             c2 = ch[f]
 
@@ -106,7 +114,7 @@ class Model(nn.Module):
     The default parts are EfficientRep Backbone, Rep-PAN and
     Efficient Decoupled Head.
     '''
-    def __init__(self, config, channels=3, num_classes=None, anchors=None):  # model, input channels, number of classes
+    def __init__(self, config, channels=3, num_classes=None, anchors=None,fuse_ab=False):  # model, input channels, number of classes
         super().__init__()
         # Build network
         try:
@@ -141,7 +149,11 @@ class Model(nn.Module):
             if use_simota:
                 self.detect = Detect_simota(num_classes, anchors, num_layers)
             else:
-                self.detect = Detect_yaml(num_classes, anchors, num_layers, use_dfl=use_dfl, stride=stride)
+                if fuse_ab:
+                    anchors_init = config.model.head.anchors_init
+                    self.detect = Detect_yaml_fuseab(num_classes, anchors_init, num_layers, use_dfl=use_dfl, stride=stride)
+                else:
+                    self.detect = Detect_yaml(num_classes, anchors, num_layers, use_dfl=use_dfl, stride=stride,fuse_ab=False)
             self.stride = self.detect.stride
             self.detect.initialize_biases()
         else:
@@ -269,8 +281,8 @@ def build_network_yaml(config, channels, num_classes, anchors, num_layers):
     head = Detect(num_classes, anchors, num_layers, head_layers=head_layers, use_dfl=use_dfl)
 
     return head
-def build_model(cfg, num_classes, device,img_size):
-    model = Model(cfg, channels=3, num_classes=num_classes, anchors=cfg.model.head.anchors).to(device)
+def build_model(cfg, num_classes, device,img_size,fuse_ab=False):
+    model = Model(cfg, channels=3, num_classes=num_classes, anchors=cfg.model.head.anchors,fuse_ab=fuse_ab).to(device)
     from yolov6.utils.events import LOGGER
     LOGGER.info("Model Summary: {}".format(get_model_info(model, img_size = img_size,cfg = cfg)))
     LOGGER.info("Because of the use of heavy parameterization, the number of parameters and floating point operations counted before training "+
@@ -325,9 +337,11 @@ class Detect_yaml(nn.Module):
             reg_distri_list = torch.cat(reg_distri_list, axis=1)
 
             if self.nl == 4:
-                x = [x[0][0], x[1][0], x[2][0], x[3][0]]           
+                x = [x[0][0], x[1][0], x[2][0], x[3][0]]
             elif self.nl == 5:
                 x = [x[0][0], x[1][0], x[2][0], x[3][0],x[4][0]]
+            elif self.nl == 6:
+                x = [x[0][0], x[1][0], x[2][0], x[3][0], x[4][0], x[5][0]]
             else:
                 x = [x[0][0], x[1][0], x[2][0]]
             return x, cls_score_list, reg_distri_list
@@ -339,6 +353,8 @@ class Detect_yaml(nn.Module):
                 x1 = [x[0][0], x[1][0], x[2][0], x[3][0]]
             elif self.nl == 5:
                 x1 = [x[0][0], x[1][0], x[2][0], x[3][0],x[4][0]]
+            elif self.nl == 6:
+                x1 = [x[0][0], x[1][0], x[2][0], x[3][0], x[4][0], x[5][0]]
             else:
                 x1 = [x[0][0], x[1][0], x[2][0]]
             anchor_points, stride_tensor = generate_anchors(
@@ -429,6 +445,130 @@ class Detect_simota(nn.Module):
                     y = torch.cat((xy, wh, y[..., 4:]), -1)
                 z.append(y.view(bs, -1, self.no))
         return x if self.training else torch.cat(z, 1)
+
+
+class Detect_yaml_fuseab(nn.Module):
+    '''Efficient Decoupled Head for fusing anchor-base branches.
+    '''
+    def __init__(self, num_classes=80, anchors=None, num_layers=3, inplace=True,  use_dfl=True, reg_max=16,stride = [8, 16, 32]):  # detection layer
+        super().__init__()
+        self.nc = num_classes  # number of classes
+        self.no = num_classes + 5  # number of outputs per anchor
+        self.nl = num_layers  # number of detection layers
+        if isinstance(anchors, (list, tuple)):
+            self.na = len(anchors[0]) // 2
+        else:
+            self.na = anchors
+        self.anchors = anchors
+        self.grid = [torch.zeros(1)] * num_layers
+        self.prior_prob = 1e-2
+        self.inplace = inplace
+        self.stride = torch.tensor(stride)
+        self.use_dfl = use_dfl
+        self.reg_max = reg_max
+        self.proj_conv = nn.Conv2d(self.reg_max + 1, 1, 1, bias=False)
+        self.grid_cell_offset = 0.5
+        self.grid_cell_size = 5.0
+        self.anchors_init= ((torch.tensor(anchors) / self.stride[:,None])).reshape(self.nl, self.na, 2)
+
+
+    def initialize_biases(self):
+        self.proj = nn.Parameter(torch.linspace(0, self.reg_max, self.reg_max + 1), requires_grad=False)
+        self.proj_conv.weight = nn.Parameter(self.proj.view([1, self.reg_max + 1, 1, 1]).clone().detach(),
+                                                   requires_grad=False)
+
+    def forward(self, x, val_loss = False):
+        if self.training:
+            device = x[0][0].device
+            cls_score_list_af = []
+            reg_dist_list_af = []
+            cls_score_list_ab = []
+            reg_dist_list_ab = []
+            for i in range(self.nl):
+                b, _, h, w = x[i][0].shape
+                l = h * w
+                # anchor_base
+                cls_output_ab = x[i][1]
+                reg_output_ab = x[i][2]
+
+                cls_output_ab = torch.sigmoid(cls_output_ab)
+                cls_output_ab = cls_output_ab.reshape(b, self.na, -1, h, w).permute(0, 1, 3, 4, 2)
+                cls_score_list_ab.append(cls_output_ab.flatten(1, 3))
+
+                reg_output_ab = reg_output_ab.reshape(b, self.na, -1, h, w).permute(0, 1, 3, 4, 2)
+                reg_output_ab[..., 2:4] = ((reg_output_ab[..., 2:4].sigmoid() * 2) ** 2) * (
+                    self.anchors_init[i].reshape(1, self.na, 1, 1, 2).to(device))
+                reg_dist_list_ab.append(reg_output_ab.flatten(1, 3))
+
+                #anchor_free
+                cls_output_af = x[i][3]
+                reg_output_af = x[i][4]
+
+                cls_output_af = torch.sigmoid(cls_output_af)
+                cls_score_list_af.append(cls_output_af.flatten(2).permute((0, 2, 1)))
+                reg_dist_list_af.append(reg_output_af.flatten(2).permute((0, 2, 1)))
+
+            cls_score_list_ab = torch.cat(cls_score_list_ab, axis=1)
+            reg_dist_list_ab = torch.cat(reg_dist_list_ab, axis=1)
+            cls_score_list_af = torch.cat(cls_score_list_af, axis=1)
+            reg_dist_list_af = torch.cat(reg_dist_list_af, axis=1)
+            if self.nl == 4:
+                x = [x[0][0], x[1][0], x[2][0], x[3][0]]
+            elif self.nl == 5:
+                x = [x[0][0], x[1][0], x[2][0], x[3][0],x[4][0]]
+            elif self.nl == 6:
+                x = [x[0][0], x[1][0], x[2][0], x[3][0], x[4][0], x[5][0]]
+            else:
+                x = [x[0][0], x[1][0], x[2][0]]
+
+            return x, cls_score_list_ab, reg_dist_list_ab, cls_score_list_af, reg_dist_list_af
+        else:
+            device = x[0][0].device
+            cls_score_list_af = []
+            reg_dist_list_af = []
+            for i in range(self.nl):
+                b, _, h, w = x[i][0].shape
+                l = h * w
+                # anchor_free
+                cls_output_af = x[i][3]
+                reg_output_af = x[i][4]
+                if self.use_dfl:
+                    reg_output_af = reg_output_af.reshape([-1, 4, self.reg_max + 1, l]).permute(0, 2, 1, 3)
+                    reg_output_af = self.proj_conv(F.softmax(reg_output_af, dim=1))
+                cls_output_af = torch.sigmoid(cls_output_af)
+                cls_score_list_af.append(cls_output_af.reshape([b, self.nc, l]))
+                reg_dist_list_af.append(reg_output_af.reshape([b, 4, l]))
+
+            cls_score_list_af = torch.cat(cls_score_list_af, axis=-1).permute(0, 2, 1)
+            reg_dist_list_af = torch.cat(reg_dist_list_af, axis=-1).permute(0, 2, 1)
+            if self.nl == 4:
+                x = [x[0][0], x[1][0], x[2][0], x[3][0]]
+            elif self.nl == 5:
+                x = [x[0][0], x[1][0], x[2][0], x[3][0],x[4][0]]
+            elif self.nl == 6:
+                x = [x[0][0], x[1][0], x[2][0], x[3][0], x[4][0], x[5][0]]
+            else:
+                x = [x[0][0], x[1][0], x[2][0]]
+
+            # anchor_free
+            anchor_points_af, stride_tensor_af = generate_anchors(
+                x, self.stride, self.grid_cell_size, self.grid_cell_offset, device=x[0].device, is_eval=True, mode='af')
+
+            pred_bboxes_af = dist2bbox(reg_dist_list_af, anchor_points_af, box_format='xywh')
+            pred_bboxes_af *= stride_tensor_af
+
+            pred_bboxes = pred_bboxes_af
+            cls_score_list = cls_score_list_af
+
+            return torch.cat(
+                [
+                    pred_bboxes,
+                    torch.ones((b, pred_bboxes.shape[1], 1), device=pred_bboxes.device, dtype=pred_bboxes.dtype),
+                    cls_score_list
+                ],
+                axis=-1)
+
+
 def get_model_info(model, img_size=640, cfg = None):
     """Get model Params and GFlops.
     Code base on https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/utils/model_utils.py

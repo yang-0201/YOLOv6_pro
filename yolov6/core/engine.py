@@ -19,6 +19,7 @@ import tools.eval as eval
 from yolov6.data.data_load import create_dataloader
 from yolov6.models.yolo import build_model
 from yolov6.models.loss import ComputeLoss
+from yolov6.models.loss_fuseab import ComputeLoss as ComputeLoss_ab
 from yolov6.models.loss_distill import ComputeLoss as ComputeLoss_distill
 from yolov6.utils.events import LOGGER, NCOLS, load_yaml, write_tblog, write_tbimg
 from yolov6.utils.ema import ModelEMA, de_parallel
@@ -72,6 +73,14 @@ class Trainer:
             resume_state_dict = self.ckpt['model'].float().state_dict()  # checkpoint state_dict as FP32
             model.load_state_dict(resume_state_dict, strict=True)  # load
             self.start_epoch = self.ckpt['epoch'] + 1
+            if self.args.wandb:
+                for i in range(self.ckpt['epoch']):
+                    import wandb
+                    wandb.log({"train/all_loss": 0, "train/iou_loss": 0,
+                               "train/dfl_loss": 0,
+                               "train/cls_loss": 0, "metrics/mAP_0.5": 0,
+                               "metrics/mAP_0.5:0.95": 0})
+            # print(self.start_epoch)
             self.optimizer.load_state_dict(self.ckpt['optimizer'])
             if self.main_process:
                 self.ema.ema.load_state_dict(self.ckpt['ema'].float().state_dict())
@@ -147,6 +156,11 @@ class Trainer:
                                                                    epoch_num, self.max_epoch, temperature, step_num)
             elif self.args.simota:
                 total_loss, loss_items = self.compute_loss_simota(preds, targets)
+            elif self.args.fuse_ab:
+                total_loss, loss_items = self.compute_loss((preds[0],preds[3],preds[4]), targets, epoch_num, step_num) # YOLOv6_af
+                total_loss_ab, loss_items_ab = self.compute_loss_ab(preds[:3], targets, epoch_num, step_num) # YOLOv6_ab
+                total_loss += total_loss_ab
+                loss_items += loss_items_ab
             else:
                 total_loss, loss_items = self.compute_loss(preds, targets, epoch_num, step_num)
             if self.rank != -1:
@@ -268,9 +282,20 @@ class Trainer:
         self.compute_loss = ComputeLoss(fpn_strides = self.cfg.model.head.strides,
                                         num_classes=self.data_dict['nc'],
                                         ori_img_size=self.img_size,
+                                        warmup_epoch=0,
                                         use_dfl=self.cfg.model.head.use_dfl,
                                         reg_max=self.cfg.model.head.reg_max,
                                         iou_type=self.cfg.model.head.iou_type)
+        if self.args.fuse_ab:
+            self.compute_loss_ab = ComputeLoss_ab(num_classes=self.data_dict['nc'],
+                                        ori_img_size=self.img_size,
+                                        warmup_epoch=0,
+                                        use_dfl=False,
+                                        reg_max=0,
+                                        iou_type=self.cfg.model.head.iou_type,
+                                        fpn_strides=self.cfg.model.head.strides)
+
+
         if self.args.distill:
             self.compute_loss_distill = ComputeLoss_distill(fpn_strides = self.cfg.model.head.strides,
                                                             num_classes=self.data_dict['nc'],
@@ -280,14 +305,27 @@ class Trainer:
                                                             iou_type=self.cfg.model.head.iou_type,
                                                             distill_weight = self.cfg.model.head.distill_weight,
                                                             distill_feat = self.args.distill_feat,
-                                                            )
+
+                                     )
+        # if self.args.aux:
+        #     from yolov6.models.loss_aux import ComputeLoss_Aux
+        #     ComputeLoss_Aux(fpn_strides=self.cfg.model.head.strides,
+        #                 num_classes=self.data_dict['nc'],
+        #                 ori_img_size=self.img_size,
+        #                 use_dfl=self.cfg.model.head.use_dfl,
+        #                 reg_max=self.cfg.model.head.reg_max,
+        #                 iou_type=self.cfg.model.head.iou_type)
         if self.args.simota:
             self.compute_loss_simota = ComputeLoss_SimOTA(
                                             strides=self.cfg.model.head.strides,
                                             # num_classes=self.data_dict['nc'],
                                             # ori_img_size=self.img_size,
                                             # use_dfl=self.cfg.model.head.use_dfl,
-                                            # reg_max=self.cfg.model.head.reg_max,
+
+
+
+
+
                                             iou_type=self.cfg.model.head.iou_type)
 
     def prepare_for_steps(self):
@@ -384,7 +422,7 @@ class Trainer:
 
     def get_model(self, args, cfg, nc, device):
         img_size = args.img_size
-        model = build_model(cfg, nc, device,img_size)
+        model = build_model(cfg, nc, device,img_size, fuse_ab=self.args.fuse_ab)
         try:
             build_type = cfg.model.build_type
         except:
@@ -392,7 +430,7 @@ class Trainer:
         weights = cfg.model.pretrained
         if weights:  # finetune if pretrained model is set
             LOGGER.info(f'Loading state_dict from {weights} for fine-tuning...')
-            if build_type =="yaml" and cfg.model.type != "YOLOv6l":
+            if build_type =="yaml" and cfg.model.type != "YOLOv6l" and not args.resume:
                 model = load_state_dict_yaml(weights, model, map_location=device)
             elif args.weights or args.resume:
                 model = load_state_dict(weights, model, map_location=device)

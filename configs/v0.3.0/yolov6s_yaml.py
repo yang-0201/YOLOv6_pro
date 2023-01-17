@@ -1,28 +1,24 @@
-# YOLOv6l model
+# YOLOv6s model
 model = dict(
-    type='YOLOv6l_yaml',
-    # pretrained='yolov6l_yaml.pt',
+    type='YOLOv6s',
     pretrained=None,
-    build_type = 'yaml',
-    yaml_file = 'configs/CoAtNet/coat.yaml',
-    depth_multiple=1.0,
-    width_multiple=1.0,
+    build_type='yaml',
+    yaml_file='configs/v0.3.0/yolov6s_BIC.yaml',
+    depth_multiple=0.33,
+    width_multiple=0.50,
     head=dict(
         type='EffiDeHead',
         num_layers=3,
         anchors=1,
+        anchors_init=[[10, 13, 19, 19, 33, 23],[30, 61, 59, 59, 59, 119],[116, 90, 185, 185, 373, 326]],
         strides=[8, 16, 32],
         iou_type='giou',
-        use_dfl=True,
-        reg_max=16, #if use_dfl is False, please set reg_max to 0
-        distill_weight={
-            'class': 2.0,
-            'dfl': 1.0,
-        },
+        use_dfl=False,
+        reg_max=0 #if use_dfl is False, please set reg_max to 0
     )
 )
 
-solver=dict(
+solver = dict(
     optim='SGD',
     lr_scheduler='Cosine',
     lr0=0.01,
@@ -40,12 +36,10 @@ data_aug = dict(
     hsv_v=0.4,
     degrees=0.0,
     translate=0.1,
-    scale=0.9,
+    scale=0.5,
     shear=0.0,
     flipud=0.0,
     fliplr=0.5,
     mosaic=1.0,
-    mixup=0.1,
+    mixup=0.0,
 )
-training_mode = "conv_silu"
-# use normal conv to speed up training and further improve accuracy.
