@@ -156,7 +156,8 @@ class ComputeLoss:
         loss_cls = self.varifocal_loss(pred_scores, target_scores, one_hot_label)
 
         target_scores_sum = target_scores.sum()
-        loss_cls /= target_scores_sum
+        if target_scores_sum > 0:
+            loss_cls /= target_scores_sum
 
         # bbox loss
         loss_iou, loss_dfl = self.bbox_loss(pred_distri, pred_bboxes, anchor_points_s, target_bboxes,
@@ -225,7 +226,10 @@ class BboxLoss(nn.Module):
                 target_scores.sum(-1), fg_mask).unsqueeze(-1)
             loss_iou = self.iou_loss(pred_bboxes_pos,
                                      target_bboxes_pos) * bbox_weight
-            loss_iou = loss_iou.sum() / target_scores_sum
+            if target_scores_sum == 0:
+                loss_iou = loss_iou.sum()
+            else:
+                loss_iou = loss_iou.sum() / target_scores_sum
 
             # dfl loss
             if self.use_dfl:
@@ -238,7 +242,10 @@ class BboxLoss(nn.Module):
                     target_ltrb, bbox_mask).reshape([-1, 4])
                 loss_dfl = self._df_loss(pred_dist_pos,
                                         target_ltrb_pos) * bbox_weight
-                loss_dfl = loss_dfl.sum() / target_scores_sum
+                if target_scores_sum == 0:
+                    loss_dfl = loss_dfl.sum()
+                else:
+                    loss_dfl = loss_dfl.sum() / target_scores_sum
             else:
                 loss_dfl = torch.tensor(0.).to(pred_dist.device)
 
