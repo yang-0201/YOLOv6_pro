@@ -1,4 +1,6 @@
 # YOLOv6 pro
+[**MAF-YOLO | 我们开发的MAF-YOLO（PRCV 2024 Oral）已开源**](https://github.com/yang-0201/MAF-YOLO)
+
 初衷让 `YOLOv6` 更换网络结构更为便捷 <br><br>
 基于官方 `YOLOv6` 的整体架构，使用 `YOLOv5` 的网络构建方式构建一个 `YOLOv6` 网络，包括 `backbone`，`neck`，`effidehead` 结构 <br><br>
 可以在 `yaml` 文件中任意修改或添加模块，并且每个修改的文件都是独立可运行的，目的是为了助力科研 <br><br>
